@@ -1,10 +1,10 @@
-import LoginCard from './login-card';
+import LoginCard from '../login-card';
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { SignupCard } from './signup-card';
+import { SignupCard } from '../signup-card';
 
-export default function LoginCardPage() {
+export default function LoginPage() {
   const [activeView, setActiveView] = useState('signup');
 
   return (

@@ -1,12 +1,6 @@
-import { Link } from "react-router-dom"
+import { Link } from 'react-router-dom';
 import {
-  BookOpen,
-  FileText,
-  FolderOpen,
   Home,
-  Layers,
-  Settings,
-  Tag,
   Users,
   Table,
   Database,
@@ -14,28 +8,32 @@ import {
   CheckSquare,
   User,
   Shield,
-} from "lucide-react"
+  Tag,
+} from 'lucide-react';
 
-import { cn } from "../lib/utils"
-import { Button } from "./ui/button"
-import { ScrollArea } from "./ui/scroll-area"
+import { cn } from '../lib/utils';
+import { Button } from './ui/button';
+import { ScrollArea } from './ui/scroll-area';
 
 function SidebarItem({ icon, title, href, isActive }) {
   return (
     <Button
       asChild
-      variant={isActive ? "secondary" : "ghost"}
-      className={cn("flex w-full items-center justify-start gap-2 px-3", isActive ? "bg-secondary" : "hover:bg-muted")}
+      variant={isActive ? 'secondary' : 'ghost'}
+      className={cn(
+        'flex w-full items-center justify-start gap-2 px-3',
+        isActive ? 'bg-secondary' : 'hover:bg-muted',
+      )}
     >
-      <Link href={href}>
+      <Link to={href}>
         {icon}
         <span>{title}</span>
       </Link>
     </Button>
-  )
+  );
 }
 
-export function AppSidebar({ userInfo  }) {
+export function AppSidebar({ userInfo }) {
   const sidebarItems = [
     {
       icon: <Home className="h-5 w-5" />,
@@ -49,14 +47,20 @@ export function AppSidebar({ userInfo  }) {
       title: 'My Tasks',
       id: 'my-tasks',
       href: '/my-tasks',
-      roles: ['ADMIN'],
+      roles: ['ANNOTATOR'],
     },
-
     {
       icon: <Database className="h-5 w-5" />,
       title: 'Datasets',
       id: 'datasets',
       href: '/datasets',
+      roles: ['SUPER_ADMIN', 'ADMIN'],
+    },
+    {
+      icon: <Tag className="h-5 w-5" />,
+      title: 'Labels',
+      id: 'labels',
+      href: '/labels',
       roles: ['SUPER_ADMIN', 'ADMIN'],
     },
     {
@@ -82,9 +86,9 @@ export function AppSidebar({ userInfo  }) {
     },
     {
       icon: <Shield className="h-5 w-5" />,
-      title: 'Admin',
+      title: 'Admins',
       id: 'admin',
-      href: '/admin',
+      href: '/admins',
       roles: ['SUPER_ADMIN'],
     },
     {

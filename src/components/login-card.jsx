@@ -12,12 +12,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import API from '../api';
+import { useAuth } from '../context/AuthContext';
 
 export default function LoginCard({ onViewChange }) {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -31,43 +33,30 @@ export default function LoginCard({ onViewChange }) {
   const handleSubmit = async e => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const result = await login(formData);
 
-      console.log('Form data:', formData);
+      if (result.success) {
+        // Successfully logged in, the user is now available in context
+        const user = result.user;
 
-      const response = await API.post('/auth/login', formData, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      console.log(response);
-
-      localStorage.setItem('token', response.data.data.token);
-
-      console.log('Login successful:', response.data);
-
-      if (response.data.data.user.role === "SUPER_ADMIN" || response.data.data.user.role === "ADMIN") { 
-        navigate('/dashboard', {
-          state: {
-            user: response.data.data.user
-          },
-        });
+        if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') {
+          navigate('/dashboard');
+        } else if (user.role === 'ANNOTATOR') {
+          navigate('/space');
+        } else {
+          setError('Account type not recognized');
+        }
+      } else {
+        setError(
+          result.error || 'Login failed. Please check your credentials.',
+        );
       }
-      else if (response.data.data.user.role === "ANNOTATOR") {
-        navigate('/space', {
-          state: {
-            user: response.data.data.user
-          },
-        });
-      }
-      else {
-        alert('Invalid username or password');
-      }
-
     } catch (error) {
       console.error('Login failed:', error);
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +87,7 @@ export default function LoginCard({ onViewChange }) {
                 required
               />
             </div>
-          </div>
+          </div>{' '}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
@@ -140,6 +129,9 @@ export default function LoginCard({ onViewChange }) {
               </Button>
             </div>
           </div>
+          {error && (
+            <div className="text-sm text-destructive font-medium">{error}</div>
+          )}
         </CardContent>
         <CardFooter className="flex flex-col space-y-4 mt-4">
           <Button type="submit" className="w-full" disabled={isLoading}>

@@ -1,5 +1,3 @@
-'use client';
-
 import {
   Card,
   CardContent,
@@ -27,7 +25,6 @@ export default function AnnotatorCard() {
     return 'evening';
   };
 
-  // Sample stats - in a real app, these would come from props or an API
   const stats = {
     tasksCompleted: 38,
     tasksAssigned: 45,

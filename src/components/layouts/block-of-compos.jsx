@@ -1,16 +1,14 @@
 import Navbar from './Navbar';
 import Footer from './Footer';
-import { AppSidebar } from './side-bar';
-import { useLocation } from 'react-router-dom';
-
+import { AppSidebar } from '../side-bar';
+import { useAuth } from '../../context/AuthContext';
 
 const BlockOfCompos = ({ children }) => {
-  const location = useLocation();
-  const { user } = location.state || {};
-  console.log('user block : ', user);
+  const { user } = useAuth();
+
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar userInfo={user} />
+      <Navbar />
       <div className="flex flex-1">
         <AppSidebar userInfo={user} />
         <main className="flex-1 p-16 ">{children}</main>

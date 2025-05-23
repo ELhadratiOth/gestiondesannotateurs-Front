@@ -1,5 +1,5 @@
 import { Bell, Search, User } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -9,12 +9,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { useAuth } from '../../context/AuthContext';
 
-export default function Navbar({ userInfo }) {
-  console.log(userInfo);
+export default function Navbar() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
-  const logoutProc = () => {
-    localStorage.removeItem('token');
+  const handleLogout = () => {
+    logout();
+    navigate('/auth');
   };
 
   return (
@@ -32,19 +35,32 @@ export default function Navbar({ userInfo }) {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="relative h-8 rounded-2xl  flex items-center justify-center p-0"
+              className="relative h-8 rounded-2xl flex items-center justify-center p-0"
             >
               <User className="h-5 w-5" />
-              <p>{userInfo.username}</p>
+              {user && user.username && (
+                <span className="ml-2 text-sm">{user.username}</span>
+              )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">@{userInfo.firstname+ userInfo.lastname } </p>
-                <p className="text-xs leading-none text-muted-foreground">
-                  {userInfo.email}
-                </p>
+                {user && (
+                  <>
+                    <p className="text-sm font-medium leading-none">
+                      @{user.username}
+                    </p>
+                    {user.email && (
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    )}
+                    <p className="text-xs leading-none text-muted-foreground">
+                      Role: {user.role}
+                    </p>
+                  </>
+                )}
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -52,9 +68,7 @@ export default function Navbar({ userInfo }) {
               <Link to={'/profile'}>Profile</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <Link to={'/'} onClick={logoutProc}>
-              <DropdownMenuItem>Logout</DropdownMenuItem>
-            </Link>
+            <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

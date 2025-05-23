@@ -14,15 +14,16 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Checkbox } from './ui/checkbox';
 import { useSearchParams } from 'react-router-dom';
-import API from '../api';
+import { useAuth } from '../context/AuthContext';
 
 export function SignupCard({ onViewChange }) {
   const navigate = useNavigate();
+  const { signup } = useAuth();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
-  console.log('mytoken : ', token);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -37,51 +38,31 @@ export function SignupCard({ onViewChange }) {
   const handleSubmit = async e => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
 
     try {
-      const response = await API.post('/auth/signup', formData, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const result = await signup(formData);
 
-      setIsLoading(false);
+      if (result.success) {
+        // User is now in the context
+        const user = result.user;
+        console.log('User:', user);
 
-      if (response.status >= 200 && response.status < 300) {
-        const data = response.data; 
-        localStorage.setItem('token', data.access_token);
-        console.log('Signup successful:', data);
-
-        if (data.data.role === 'SUPER_ADMIN' || data.data.role === 'ADMIN') {
-          navigate('/dashboard', {
-            state: {
-              user: data.data,
-            },
-          });
-          
-        } else if (data.data.role === 'ANNOTATOR') {
-          navigate('/space', {
-            state: {
-              user: data.data,
-            },
-          });
+        if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') {
+          navigate('/dashboard');
+        } else if (user.role === 'ANNOTATOR') {
+          navigate('/space');
         } else {
-          alert('Invalid username or password');
+          setError('Account type not recognized');
         }
-
-
       } else {
-        const errorData = response.data || { detail: 'Unknown error' };
-        alert(errorData.detail || 'Invalid username or password');
+        setError(result.error || 'Failed to create account. Please try again.');
       }
     } catch (error) {
+      console.error('Signup failed:', error);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
       setIsLoading(false);
-      console.error('An error occurred:', error);
-     const errorMessage =
-        error.response?.data?.detail ||
-        error.message ||
-        'An error occurred. Please try again later.';
-      alert(errorMessage);
     }
   };
 
@@ -111,8 +92,7 @@ export function SignupCard({ onViewChange }) {
                 />
               </div>
             </div>
-          </div>
-
+          </div>{' '}
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <div className="relative">
@@ -145,6 +125,9 @@ export function SignupCard({ onViewChange }) {
               </Button>
             </div>
           </div>
+          {error && (
+            <div className="text-sm text-destructive font-medium">{error}</div>
+          )}
           <div className="flex items-center space-x-2 space-y-1">
             <Checkbox className="mt-1" id="terms" required />
             <Label htmlFor="terms" className="text-sm font-normal">
