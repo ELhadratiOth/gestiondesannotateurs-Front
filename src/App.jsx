@@ -85,16 +85,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/labels"
-          element={
-            <ProtectedRoute>
-              <BlockOfCompos>
-                <Labels />
-              </BlockOfCompos>
-            </ProtectedRoute>
-          }
-        />
+
         <Route
           path="/space"
           element={
