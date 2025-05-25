@@ -199,7 +199,6 @@ export function TasksTable() {
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            {' '}
             <TableRow>
               <TableHead className="w-[80px]">ID</TableHead>
               <TableHead>Label</TableHead>
@@ -213,7 +212,6 @@ export function TasksTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {' '}
             {loading ? (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center">
@@ -255,7 +253,7 @@ export function TasksTable() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>{getStatusBadge(task.status)}</TableCell>{' '}
+                  <TableCell>{getStatusBadge(task.status)}</TableCell>
                   <TableCell className="text-right">
                     <Button
                       variant={
