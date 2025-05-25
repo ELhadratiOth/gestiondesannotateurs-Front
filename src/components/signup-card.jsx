@@ -111,13 +111,13 @@ export function SignupCard({ onViewChange }) {
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="absolute right-0 top-0 h-10 w-10 px-0"
+                className="absolute right-0.5 top-0.5 h-8 w-8 px-0 "
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  <EyeOff className="h-4 w-4 text-muted-foreground " />
                 ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
+                  <Eye className="h-4 w-4 text-muted-foreground " />
                 )}
                 <span className="sr-only">
                   {showPassword ? 'Hide password' : 'Show password'}

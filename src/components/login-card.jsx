@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 
 export default function LoginCard({ onViewChange }) {
   const navigate = useNavigate();
@@ -96,7 +97,12 @@ export default function LoginCard({ onViewChange }) {
                 className="h-auto p-0 text-xs"
                 type="button"
               >
-                Forgot password?
+                <Link
+                  to="/auth/forgot-password"
+                  className="text-xs text-primary hover:underline"
+                >
+                  Forgot password?
+                </Link>{' '}
               </Button>
             </div>
             <div className="relative">
@@ -115,7 +121,7 @@ export default function LoginCard({ onViewChange }) {
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="absolute right-0 top-0 h-10 w-10 px-0"
+                className="absolute right-0.5 top-0.5 h-8 w-8 px-0 "
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (

@@ -421,7 +421,6 @@ export default function AnnotatorsTable() {
                 <TableRow key={annotator.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      {' '}
                       <Avatar className="h-8 w-8">
                         <AvatarImage
                           src={`/placeholder.svg?height=32&width=32&text=${
@@ -455,7 +454,7 @@ export default function AnnotatorsTable() {
                   </TableCell>
                   <TableCell className="hidden max-w-[200px] truncate md:table-cell">
                     {annotator.email}
-                  </TableCell>{' '}
+                  </TableCell>
                   <TableCell>
                     <Badge variant={annotator.active ? 'default' : 'secondary'}>
                       {annotator.active ? 'Active' : 'Inactive'}

@@ -43,6 +43,13 @@ export function AppSidebar({ userInfo }) {
       roles: ['SUPER_ADMIN', 'ADMIN'],
     },
     {
+      icon: <Database className="h-5 w-5" />,
+      title: 'Space',
+      id: 'space',
+      href: '/space',
+      roles: ['ANNOTATOR'],
+    },
+    {
       icon: <CheckSquare className="h-5 w-5" />,
       title: 'My Tasks',
       id: 'my-tasks',
@@ -91,6 +98,14 @@ export function AppSidebar({ userInfo }) {
       href: '/admins',
       roles: ['SUPER_ADMIN'],
     },
+    {
+      icon: <Database className="h-5 w-5" />,
+      title: 'Admin Tasks',
+      id: 'admin-tasks',
+      href: '/admin/tasks',
+      roles: ['SUPER_ADMIN', 'ADMIN'],
+    },
+
     {
       icon: <User className="h-5 w-5" />,
       title: 'Profile',

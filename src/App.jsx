@@ -8,7 +8,11 @@ import Annotators from './components/pages/annotators';
 import Admins from './components/pages/admins';
 import Profile from './components/pages/profile';
 import Labels from './components/pages/labels';
-
+import ForgotPasswordPage from './components/forgot-password';
+import ForgotPasswordSuccessPage from './components/success-reset';
+import ResetPasswordPage from './components/reset-password';
+import AnnotatePage from './components/pages/annotate';
+import AdminTasks from './components/pages/admin-tasks';
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
@@ -106,11 +110,92 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin/tasks/"
+          element={
+            <ProtectedRoute>
+              <BlockOfCompos>
+                <AdminTasks />
+              </BlockOfCompos>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/annotate/:id"
+          element={
+            <ProtectedRoute>
+              <BlockOfCompos>
+                <AnnotatePage />
+              </BlockOfCompos>
+            </ProtectedRoute>
+          }
+        />
 
         {/* Public routes */}
         <Route
           path="/auth"
-          element={user ? <Navigate to="/dashboard" replace /> : <LoginPage />}
+          element={
+            user ? (
+              user.role === 'ANNOTATOR' ? (
+                <Navigate to="/space" replace />
+              ) : user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Navigate to="/auth" replace />
+              )
+            ) : (
+              <LoginPage />
+            )
+          }
+        />
+        <Route
+          path="/auth/forgot-password"
+          element={
+            user ? (
+              user.role === 'ANNOTATOR' ? (
+                <Navigate to="/space" replace />
+              ) : user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Navigate to="/auth" replace />
+              )
+            ) : (
+              <ForgotPasswordPage />
+            )
+          }
+        />
+        <Route
+          path="/auth/forgot-password/success"
+          element={
+            user ? (
+              user.role === 'ANNOTATOR' ? (
+                <Navigate to="/space" replace />
+              ) : user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Navigate to="/auth" replace />
+              )
+            ) : (
+              <ForgotPasswordSuccessPage />
+            )
+          }
+        />
+        <Route
+          path="/auth/reset-password"
+          element={
+            user ? (
+              user.role === 'ANNOTATOR' ? (
+                <Navigate to="/space" replace />
+              ) : user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Navigate to="/auth" replace />
+              )
+            ) : (
+              <ResetPasswordPage />
+            )
+          }
         />
 
         {/* Default redirect */}
@@ -118,7 +203,13 @@ function App() {
           path="/"
           element={
             user ? (
-              <Navigate to="/dashboard" replace />
+              user.role === 'ANNOTATOR' ? (
+                <Navigate to="/space" replace />
+              ) : user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Navigate to="/auth" replace />
+              )
             ) : (
               <Navigate to="/auth" replace />
             )
