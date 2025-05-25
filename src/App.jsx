@@ -2,7 +2,7 @@ import { Route, Routes, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import LoginPage from './components/pages/LoginPage';
 import Space from './components/pages/space';
-import BlockOfCompos from './components/Layouts/Block-of-compos';
+import BlockOfCompos from './components/layouts/block-of-compos';
 import Datasets from './components/pages/datasets';
 import Annotators from './components/pages/annotators';
 import Admins from './components/pages/admins';
@@ -42,7 +42,7 @@ function App() {
           element={
             <ProtectedRoute>
               <BlockOfCompos>
-                <h1>Home</h1>
+                <AdminDashboard />
               </BlockOfCompos>
             </ProtectedRoute>
           }
