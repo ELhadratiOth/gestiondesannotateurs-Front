@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '../../context/AuthContext';
+import { ThemeToggle } from '../ui/theme-toggle';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -29,8 +30,9 @@ export default function Navbar() {
           </span>
           <span className="hidden md:inline-block">Annotation Manager</span>
         </Link>
-      </div>
+      </div>{' '}
       <div className="flex items-center gap-2">
+        <ThemeToggle variant="dropdown" />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

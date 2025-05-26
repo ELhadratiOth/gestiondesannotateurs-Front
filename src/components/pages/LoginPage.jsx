@@ -3,19 +3,21 @@ import LoginCard from '../login-card';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SignupCard } from '../signup-card';
+import { ThemeToggle } from '../ui/theme-toggle';
 
 export default function LoginPage() {
   const [activeView, setActiveView] = useState('signup');
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="flex h-16 items-center border-b px-4 md:px-6">
+      <header className="flex h-16 items-center justify-between border-b px-4 md:px-6">
         <Link to={'/'} className="flex items-center gap-2 font-semibold">
           <span className="h-8 w-8 rounded-md bg-primary text-center text-lg font-bold leading-8 text-primary-foreground">
             A
           </span>
           <span>Annotation Manager</span>
         </Link>
+        <ThemeToggle variant="dropdown" />
       </header>
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
         <div className="mx-auto grid w-full max-w-[900px] gap-6 md:grid-cols-2">

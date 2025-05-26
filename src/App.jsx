@@ -13,6 +13,7 @@ import ForgotPasswordSuccessPage from './components/success-reset';
 import ResetPasswordPage from './components/reset-password';
 import AnnotatePage from './components/pages/annotate';
 import AdminTasks from './components/pages/admin-tasks';
+import CoupleOfTextPage from './components/pages/couple-of-text';
 import FooterDashboard from './components/footer-dashboard';
 import AdminDashboard from './components/pages/dashboard';
 
@@ -71,7 +72,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/profile"
           element={
@@ -82,7 +82,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/datasets"
           element={
@@ -93,7 +92,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/space"
           element={
@@ -123,8 +121,7 @@ function App() {
               </BlockOfCompos>
             </ProtectedRoute>
           }
-        />
-
+        />{' '}
         <Route
           path="/annotate/:id"
           element={
@@ -135,7 +132,14 @@ function App() {
             </ProtectedRoute>
           }
         />
-
+        <Route
+          path="/couple-of-text/:idDataset"
+          element={
+            <ProtectedRoute>
+              <CoupleOfTextPage />
+            </ProtectedRoute>
+          }
+        />
         {/* Public routes */}
         <Route
           path="/auth"
@@ -201,7 +205,6 @@ function App() {
             )
           }
         />
-
         {/* Default redirect */}
         <Route
           path="/"

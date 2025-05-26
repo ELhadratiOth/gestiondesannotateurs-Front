@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Card,
   CardContent,
@@ -27,6 +28,8 @@ import {
   FileText,
   LayoutGrid,
   Info,
+  MoreHorizontal,
+  Eye,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -71,6 +74,7 @@ import {
 import API from '../api';
 
 export default function DatasetsGrid() {
+  const navigate = useNavigate();
   const [datasets, setDatasets] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDataset, setSelectedDataset] = useState(null);
@@ -192,11 +196,9 @@ export default function DatasetsGrid() {
           'Unexpected annotators response format, using mock data:',
           result,
         );
-       
       }
     } catch (error) {
       console.error('Error fetching annotators:', error);
-      
     }
   }, []);
 
@@ -454,7 +456,6 @@ export default function DatasetsGrid() {
 
     setIsDisaffecting(true);
     try {
- 
       await API.delete(`/api/tasks/dataset/${datasetId}`);
 
       console.log('Removed all annotators from dataset:', datasetId);
@@ -484,7 +485,6 @@ export default function DatasetsGrid() {
   const handleCardClick = datasetId => {
     setDetailDataset(datasetId);
   };
-
   const handleScanAnnotators = (datasetId, e) => {
     if (e) e.stopPropagation();
     setScanningDataset(datasetId);
@@ -494,6 +494,12 @@ export default function DatasetsGrid() {
     setTimeout(() => {
       setIsScanning(false);
     }, 1500);
+  };
+
+  // Navigate to couple of text page
+  const handleViewCouplesOfText = (dataset, e) => {
+    if (e) e.stopPropagation();
+    navigate(`/couple-of-text/${dataset.datasetId}`);
   };
 
   const getAnnotatorName = annotatorId => {
@@ -794,7 +800,7 @@ export default function DatasetsGrid() {
                     <CardDescription>
                       {dataset.datasetLabel || 'No Label'}
                     </CardDescription>
-                  </div>
+                  </div>{' '}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -804,25 +810,18 @@ export default function DatasetsGrid() {
                         onClick={e => e.stopPropagation()}
                       >
                         <span className="sr-only">Open menu</span>
-                        <svg
-                          width="15"
-                          height="15"
-                          viewBox="0 0 15 15"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
-                        >
-                          <path
-                            d="M3.625 7.5C3.625 8.12132 3.12132 8.625 2.5 8.625C1.87868 8.625 1.375 8.12132 1.375 7.5C1.375 6.87868 1.87868 6.375 2.5 6.375C3.12132 6.375 3.625 6.87868 3.625 7.5ZM8.625 7.5C8.625 8.12132 8.12132 8.625 7.5 8.625C6.87868 8.625 6.375 8.12132 6.375 7.5C6.375 6.87868 6.87868 6.375 7.5 6.375C8.12132 6.375 8.625 6.87868 8.625 7.5ZM13.625 7.5C13.625 8.12132 13.1213 8.625 12.5 8.625C11.8787 8.625 11.375 8.12132 11.375 7.5C11.375 6.87868 11.8787 6.375 12.5 6.375C13.1213 6.375 13.625 6.87868 13.625 7.5Z"
-                            fill="currentColor"
-                            fillRule="evenodd"
-                            clipRule="evenodd"
-                          ></path>
-                        </svg>
+                        <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={e => handleViewCouplesOfText(dataset, e)}
+                      >
+                        <Eye className="mr-2 h-4 w-4" />
+                        View All Couples of Text
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={e => handleEditDataset(dataset.datasetId, e)}
@@ -1386,7 +1385,6 @@ export default function DatasetsGrid() {
             </div>
 
             <div>
-              
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-medium">
                   Available Annotators

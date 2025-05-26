@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/pagination';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, MoreHorizontal, Eye, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -56,7 +56,7 @@ export function TasksTable() {
         if (response.status === 200) {
           // Process the response data to match our expected structure
           const responseData = response.data;
-          console.log('my  data : ' + responseData);
+          console.log('my  data : ' + responseData.data[0].datasetId);
 
           if (
             responseData.status === 'success' &&
@@ -115,11 +115,16 @@ export function TasksTable() {
 
     return matchesSearch && matchesStatusFilter;
   });
-
   // Navigate to annotation page using dataset ID instead of task ID
   const handleAnnotateClick = task => {
     navigate(`/annotate/${task.datasetId}`);
   };
+
+  // Navigate to couple of text page
+  const handleViewCouplesOfText = task => {
+    navigate(`/couple-of-text/${task.datasetId}`);
+  };
+
   const getStatusBadge = status => {
     switch (status) {
       case 'completed':
@@ -253,34 +258,58 @@ export function TasksTable() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>{getStatusBadge(task.status)}</TableCell>
+                  <TableCell>{getStatusBadge(task.status)}</TableCell>{' '}
                   <TableCell className="text-right">
-                    <Button
-                      variant={
-                        task.status === 'not-started'
-                          ? 'default'
-                          : task.status === 'in-progress'
-                          ? 'secondary'
-                          : 'outline'
-                      }
-                      size="sm"
-                      onClick={() => handleAnnotateClick(task)}
-                      disabled={task.status === 'completed'}
-                      className={`min-w-[80px] ${
-                        task.status === 'not-started'
-                          ? 'bg-gray-800 hover:bg-gray-900'
-                          : task.status === 'in-progress'
-                          ? 'bg-orange-100 text-orange-800 hover:bg-orange-200'
-                          : ''
-                      }`}
-                    >
-                      {task.action ||
-                        (task.status === 'not-started'
-                          ? 'Start'
-                          : task.status === 'in-progress'
-                          ? 'Continue'
-                          : 'Review')}
-                    </Button>
+                    <div className="flex items-center gap-2 justify-end">
+                      <Button
+                        variant={
+                          task.status === 'not-started'
+                            ? 'default'
+                            : task.status === 'in-progress'
+                            ? 'secondary'
+                            : 'outline'
+                        }
+                        size="sm"
+                        onClick={() => handleAnnotateClick(task)}
+                        disabled={task.status === 'completed'}
+                        className={`min-w-[80px] ${
+                          task.status === 'not-started'
+                            ? 'bg-gray-800 hover:bg-gray-900'
+                            : task.status === 'in-progress'
+                            ? 'bg-orange-100 text-orange-800 hover:bg-orange-200'
+                            : ''
+                        }`}
+                      >
+                        {task.action ||
+                          (task.status === 'not-started'
+                            ? 'Start'
+                            : task.status === 'in-progress'
+                            ? 'Continue'
+                            : 'Review')}
+                      </Button>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleViewCouplesOfText(task)}
+                          >
+                            <Eye className="mr-2 h-4 w-4" />
+                            View All Couples of Text
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
