@@ -116,7 +116,7 @@ export function AppSidebar({ userInfo }) {
   ];
 
   return (
-    <aside className={cn('flex h-screen w-64 flex-col border-r bg-background')}>
+    <aside className={cn('flex fixed  h-screen w-64 flex-col border-r bg-background')}>
       <ScrollArea className="flex-1 px-3 py-4">
         <div className="space-y-1">
           {sidebarItems
