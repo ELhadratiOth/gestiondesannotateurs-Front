@@ -13,6 +13,8 @@ import ForgotPasswordSuccessPage from './components/success-reset';
 import ResetPasswordPage from './components/reset-password';
 import AnnotatePage from './components/pages/annotate';
 import AdminTasks from './components/pages/admin-tasks';
+import AdminDashboard from './components/pages/dashboard';
+
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
 

@@ -46,7 +46,15 @@ export default function AdminCard() {
     pendingDatasets: 0,
     nbrOfDatasets: 0,
     finishedDatasets: 0,
+    annotatorPerformance: {
+      topAnnotator: { name: '', tasks: 0 },
+      averageAnnotator: { name: '', tasks: 0 },
+      lowAnnotator: { name: '', tasks: 0 },
+    }
   });
+  
+
+  
   const [loading, setLoading] = useState(true);
   const [adminName, setAdminName] = useState('');
 
@@ -126,20 +134,15 @@ export default function AdminCard() {
       bgColor: 'bg-rose-100',
     },
   ];
-
   if (loading) {
     return <div>Loading statistics...</div>;
   }
-
-  // Get random greeting when rendering
-  const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
-  const timeGreeting = getTimeBasedGreeting();
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold tracking-tight">
-          {timeGreeting} {adminName || 'Admin'} !
+          {timeGreeting}, {adminName || 'Admin'}!
         </h2>
         <p className="text-muted-foreground">
           {randomGreeting}. Here's an overview of your annotation platform.
@@ -168,4 +171,5 @@ export default function AdminCard() {
       </div>
     </div>
   );
+
 }
