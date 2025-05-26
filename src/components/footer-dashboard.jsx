@@ -31,104 +31,136 @@ const FooterDashboard = () => {
     activeProjects: 0,
     pendingTasks: 0,
   });
-  const [loading, setLoading] = useState(true);  useEffect(() => {
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         // Fetch last annotator data
         const lastAnnotatorResponse = await API.get('/api/annotators/last');
-        
+
         // Fetch existing stats data
         const statsResponse = await API.get('/api/stats');
-        
         // Fetch annotations count in last 24 hours
-        const annotationsLast24hResponse = await API.get('/api/annotations/count-last-24h');
-        console.log('Annotations in last 24h:', annotationsLast24hResponse.data);
+        const annotationsLast24hResponse = await API.get(
+          '/api/annotations/count-last-24h',
+        );
+
+        // Fetch last completed task
+        const lastTaskResponse = await API.get(
+          '/api/tasks/last-task-completed',
+        );
+        console.log(
+          'Annotations in last 24h:',
+          annotationsLast24hResponse.data,
+        );
+        console.log('Last completed task:', lastTaskResponse.data);
         let activityData = [];
-        
-        if (lastAnnotatorResponse.status === 200 && lastAnnotatorResponse.data.data) {
+
+        // Add last annotator activity - always show
+        if (lastAnnotatorResponse.status === 200) {
           const lastAnnotator = lastAnnotatorResponse.data.data;
-          
-          // Create activity for the last annotator
+
+          let annotatorMessage,
+            annotatorTime,
+            annotatorUser,
+            annotatorEmail,
+            annotatorActive;
+
+          if (lastAnnotator) {
+            // There is a last annotator
+            annotatorMessage = `New annotator "${lastAnnotator.firstName} ${lastAnnotator.lastName}" joined the platform`;
+            annotatorTime = 'Recently';
+            annotatorUser = lastAnnotator.username;
+            annotatorEmail = lastAnnotator.email;
+            annotatorActive = lastAnnotator.active;
+          } else {
+            // No annotators in the database
+            annotatorMessage = 'No annotators have joined the platform yet';
+            annotatorTime = 'Waiting';
+            annotatorUser = 'System';
+            annotatorEmail = null;
+            annotatorActive = undefined;
+          }
+
           activityData.push({
             id: 1,
             type: 'user',
-            message: `New annotator "${lastAnnotator.firstName} ${lastAnnotator.lastName}" joined the platform`,
-            time: 'Recently',
-            user: lastAnnotator.username,
-            email: lastAnnotator.email,
-            active: lastAnnotator.active
+            message: annotatorMessage,
+            time: annotatorTime,
+            user: annotatorUser,
+            email: annotatorEmail,
+            active: annotatorActive,
+            hasData: !!lastAnnotator,
+          });
+        } // Add last completed task activity - always show
+        if (lastTaskResponse.status === 200) {
+          const lastTask = lastTaskResponse.data.data;
+
+          let taskMessage, taskTime, taskUser;
+
+          if (lastTask && lastTask.datasetName) {
+            // There is a completed task
+            taskMessage = `Task completed on dataset "${lastTask.datasetName}"`;
+            taskTime = lastTask.finishedAt
+              ? new Date(lastTask.finishedAt).toLocaleDateString()
+              : 'Recently';
+            taskUser = lastTask.annotatorName || 'Unknown Annotator';
+          } else {
+            taskMessage = 'No tasks have been completed yet';
+            taskTime = 'Waiting';
+            taskUser = 'System';
+          }
+
+          activityData.push({
+            id: 3,
+            type: 'task',
+            message: taskMessage,
+            time: taskTime,
+            user: taskUser,
+            hasData: !!lastTask,
           });
         }
-if (annotationsLast24hResponse.status === 200) {
-  const annotationCount = annotationsLast24hResponse.data.data || 0;
-  const message = annotationCount > 0 
-    ? `${annotationCount} annotations completed in the last 24 hours`
-    : 'No annotations completed in the last 24 hours';
-  
-  activityData.push({
-    id: 2,
-    type: 'annotation',
-    message: message,
-    time: 'Last 24h',
-    user: 'Admin',
-    count: annotationCount
-  });
-}
 
-// Fetch last task data
-try {
-  const lastTaskResponse = await API.get('/api/tasks/last');
-  if (lastTaskResponse.status === 200 && lastTaskResponse.data.data) {
-    const lastTask = lastTaskResponse.data.data;
-    activityData.push({
-      id: 3,
-      type: 'task',
-      message: `Task "${lastTask.name || 'Unnamed Task'}" was recently ${lastTask.status || 'updated'}`,
-      time: 'Recently',
-      user: lastTask.assignedTo || 'Unassigned',
-    });
-  }
-} catch (taskError) {
-  console.log('Could not fetch last task:', taskError);
-}
+        activityData.push({
+          id: 4,
+          type: 'dataset',
+          message: 'Dataset processing completed',
+          time: '4 hours ago',
+          user: 'Admin',
+        });
 
-activityData.push({
-  id: 4,
-  type: 'dataset',
-  message: 'Dataset processing completed',
-  time: '4 hours ago',
-  user: 'Admin',
-});
-
-        setRecentActivity(activityData);
-
-        // Use real stats data if available
+        setRecentActivity(activityData); // Use real stats data if available
         let recentAnnotationsCount = 0;
-        
+        let pendingTasksCount = 0;
+
         // Get real annotations count from last 24h endpoint
         if (annotationsLast24hResponse.status === 200) {
           recentAnnotationsCount = annotationsLast24hResponse.data.data || 0;
         }
-        
+
+        // Get real pending tasks count from last completed task endpoint
+        if (lastTaskResponse.status === 200 && lastTaskResponse.data.data) {
+          pendingTasksCount = lastTaskResponse.data.data.nbrOfPendingTasks || 0;
+        }
+
         if (statsResponse.status === 200 && statsResponse.data.data) {
           const stats = statsResponse.data.data;
           setQuickStats({
             recentAnnotations: recentAnnotationsCount,
             activeProjects: stats.nbrOfDatasets || 0,
-            pendingTasks: stats.pendingDatasets || 0,
+            pendingTasks: pendingTasksCount,
           });
         } else {
-          // Fallback to mock data but use real annotations count
+          // Fallback to mock data but use real annotations and pending tasks count
           setQuickStats({
             recentAnnotations: recentAnnotationsCount,
             activeProjects: 8,
-            pendingTasks: 23,
+            pendingTasks: pendingTasksCount,
           });
         }
-
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
-        
+
         // Fallback to mock data on error
         const mockActivity = [
           {
@@ -167,18 +199,20 @@ activityData.push({
 
     fetchDashboardData();
   }, []);
-
- 
   const getActivityIcon = (type, activity) => {
     switch (type) {
-      case 'annotation':
-        // Show different icon based on whether there are annotations or not
-        if (activity?.count === 0) {
+      case 'user':
+        // Show different icon based on whether there are annotators or not
+        if (!activity?.hasData) {
           return <Clock className="h-4 w-4 text-gray-500" />;
         }
-        return <FileText className="h-4 w-4 text-blue-600" />;
-      case 'user':
         return <Users className="h-4 w-4 text-green-600" />;
+      case 'task':
+        // Show different icon based on whether there are completed tasks or not
+        if (!activity?.hasData) {
+          return <Clock className="h-4 w-4 text-gray-500" />;
+        }
+        return <FileText className="h-4 w-4 text-purple-600" />;
       case 'dataset':
         return <Database className="h-4 w-4 text-purple-600" />;
       default:
@@ -191,7 +225,7 @@ activityData.push({
       <div className="space-y-6 animate-pulse">
         <div className="h-8 bg-gray-200 rounded w-1/4"></div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => (
+          {[1, 2, 3].map(i => (
             <div key={i} className="h-48 bg-gray-200 rounded-lg"></div>
           ))}
         </div>
@@ -212,39 +246,47 @@ activityData.push({
         {/* Recent Activity Card */}
         <Card className="">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-semibold">Recent Activity</CardTitle>
+            <CardTitle className="text-lg font-semibold">
+              Recent Activity
+            </CardTitle>
             <Activity className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">              {recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-start space-x-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="mt-1">{getActivityIcon(activity.type, activity)}</div>
+            <div className="space-y-3">
+              {recentActivity.map(activity => (
+                <div
+                  key={activity.id}
+                  className="flex items-start space-x-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <div className="mt-1">
+                    {getActivityIcon(activity.type, activity)}
+                  </div>
                   <div className="flex-1 space-y-1">
-                    <p className={`text-sm font-medium leading-none ${
-                      activity.type === 'annotation' && activity.count === 0 
-                        ? 'text-muted-foreground' 
-                        : ''
-                    }`}>
+                    <p
+                      className={`text-sm font-medium leading-none ${
+                        (activity.type === 'task' && !activity.hasData) ||
+                        (activity.type === 'user' && !activity.hasData)
+                          ? 'text-muted-foreground'
+                          : ''
+                      }`}
+                    >
                       {activity.message}
                     </p>
                     <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                       <span>{activity.time}</span>
                       <span>•</span>
                       <span>{activity.user}</span>
-                      {activity.email && (
-                        <>
-                          <span>•</span>
-                          <span>{activity.email}</span>
-                        </>
-                      )}
+                      {activity.email && <span>{activity.email}</span>}
                       {activity.active !== undefined && (
                         <>
                           <span>•</span>
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            activity.active 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                          }`}>
+                          <span
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              activity.active
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}
+                          >
                             {activity.active ? 'Active' : 'Inactive'}
                           </span>
                         </>
@@ -279,7 +321,8 @@ activityData.push({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">            <div className="text-center p-4 border rounded-lg hover:bg-blue-50 transition-colors">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="text-center p-4 border rounded-lg hover:bg-blue-50 transition-colors">
               <div className="text-2xl font-bold text-blue-600">
                 {quickStats.recentAnnotations}
               </div>
@@ -291,23 +334,19 @@ activityData.push({
               <div className="text-2xl font-bold text-green-600">
                 {quickStats.activeProjects}
               </div>
-              <p className="text-sm text-muted-foreground">
-                Active Projects
-              </p>
+              <p className="text-sm text-muted-foreground">Active Projects</p>
             </div>
             <div className="text-center p-4 border rounded-lg">
               <div className="text-2xl font-bold text-orange-600">
                 {quickStats.pendingTasks}
               </div>
-              <p className="text-sm text-muted-foreground">
-                Pending Tasks
-              </p>
+              <p className="text-sm text-muted-foreground">Pending Tasks</p>
             </div>
           </div>
         </CardContent>
       </Card>
     </div>
   );
-}
+};
 
 export default FooterDashboard;

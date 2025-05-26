@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import API from '../api';
 
-// Add greetings array
 const greetings = [
   "Welcome back",
   "Hello",
@@ -34,9 +33,11 @@ const getTimeBasedGreeting = () => {
   if (hour < 18) return "Good afternoon";
   return "Good evening";
 };
-
+const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
+const timeGreeting = getTimeBasedGreeting();
 
 export default function AdminCard() {
+  
   const [stats, setStats] = useState({
     nbrOfAnnotators: 0,
     activeAnnotators: 0,
