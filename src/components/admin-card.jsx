@@ -46,15 +46,8 @@ export default function AdminCard() {
     assignedDatasets: 0,
     pendingDatasets: 0,
     nbrOfDatasets: 0,
-    finishedDatasets: 0,
-    annotatorPerformance: {
-      topAnnotator: { name: '', tasks: 0 },
-      averageAnnotator: { name: '', tasks: 0 },
-      lowAnnotator: { name: '', tasks: 0 },
-    }
+    finishedDatasets: 0
   });
-  
-
   
   const [loading, setLoading] = useState(true);
   const [adminName, setAdminName] = useState('');
@@ -138,6 +131,11 @@ export default function AdminCard() {
   if (loading) {
     return <div>Loading statistics...</div>;
   }
+
+    // Get random greeting when rendering
+  const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
+  const timeGreeting = getTimeBasedGreeting();
+
 
   return (
     <div className="space-y-6">
