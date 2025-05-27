@@ -124,33 +124,14 @@ export function TasksTable() {
   const handleViewCouplesOfText = task => {
     navigate(`/couple-of-text/${task.datasetId}`);
   };
-
   const getStatusBadge = status => {
     switch (status) {
       case 'completed':
-        return (
-          <Badge
-            variant="default"
-            className="bg-green-100 text-green-800 hover:bg-green-200"
-          >
-            Completed
-          </Badge>
-        );
+        return <Badge variant="success">Completed</Badge>;
       case 'in-progress':
-        return (
-          <Badge
-            variant="secondary"
-            className="bg-blue-100 text-blue-800 hover:bg-blue-200"
-          >
-            In Progress
-          </Badge>
-        );
+        return <Badge variant="secondary">In Progress</Badge>;
       case 'not-started':
-        return (
-          <Badge variant="outline" className="border-gray-300 text-gray-600">
-            Not Started
-          </Badge>
-        );
+        return <Badge variant="outline">Not Started</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -261,6 +242,7 @@ export function TasksTable() {
                   <TableCell>{getStatusBadge(task.status)}</TableCell>{' '}
                   <TableCell className="text-right">
                     <div className="flex items-center gap-2 justify-end">
+                      {' '}
                       <Button
                         variant={
                           task.status === 'not-started'
@@ -272,13 +254,7 @@ export function TasksTable() {
                         size="sm"
                         onClick={() => handleAnnotateClick(task)}
                         disabled={task.status === 'completed'}
-                        className={`min-w-[80px] ${
-                          task.status === 'not-started'
-                            ? 'bg-gray-800 hover:bg-gray-900'
-                            : task.status === 'in-progress'
-                            ? 'bg-orange-100 text-orange-800 hover:bg-orange-200'
-                            : ''
-                        }`}
+                        className="min-w-[80px]"
                       >
                         {task.action ||
                           (task.status === 'not-started'
@@ -287,7 +263,6 @@ export function TasksTable() {
                             ? 'Continue'
                             : 'Review')}
                       </Button>
-
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button

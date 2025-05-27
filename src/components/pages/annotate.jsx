@@ -18,7 +18,8 @@ export default function AnnotatePage() {
 
   useEffect(() => {
     const fetchAnnotationData = async () => {
-      try {        setLoading(true);
+      try {
+        setLoading(true);
         const response = await API.get(
           `/api/admins/coupleoftextannotated/${datasetId}`,
         );
@@ -65,11 +66,12 @@ export default function AnnotatePage() {
       } finally {
         setLoading(false);
       }
-    };    if (datasetId) {
+    };
+    if (datasetId) {
       fetchAnnotationData();
     }
-  }, [datasetId]); 
-  
+  }, [datasetId]);
+
   // Set existing label when moving to a new text pair
   useEffect(() => {
     if (annotationData && annotationData.textPairs[currentIndex]) {
@@ -247,8 +249,8 @@ export default function AnnotatePage() {
               <CardContent className="p-4">
                 <div className="mb-4 rounded bg-primary px-4 py-2 text-primary-foreground font-medium">
                   Text A
-                </div>
-                <div className="h-[200px] overflow-y-auto rounded border p-4 bg-gray-50">
+                </div>{' '}
+                <div className="h-[200px] overflow-y-auto rounded border p-4 bg-card text-card-foreground">
                   <p className="text-sm leading-relaxed">
                     {currentTextPair.textA}
                   </p>
@@ -260,8 +262,8 @@ export default function AnnotatePage() {
               <CardContent className="p-4">
                 <div className="mb-4 rounded bg-primary px-4 py-2 text-primary-foreground font-medium">
                   Text B
-                </div>
-                <div className="h-[200px] overflow-y-auto rounded border p-4 bg-gray-50">
+                </div>{' '}
+                <div className="h-[200px] overflow-y-auto rounded border p-4 bg-card text-card-foreground">
                   <p className="text-sm leading-relaxed">
                     {currentTextPair.textB}
                   </p>
@@ -283,7 +285,7 @@ export default function AnnotatePage() {
                       onClick={() => handleLabelSelect(label)}
                       className={
                         selectedLabel === label
-                          ? 'bg-blue-600 hover:bg-blue-700'
+                          ? 'bg-primary dark:bg-primary hover:bg-primary/90 dark:hover:bg-primary/90'
                           : ''
                       }
                     >
@@ -293,15 +295,16 @@ export default function AnnotatePage() {
                 </div>
                 {selectedLabel && (
                   <div className="space-y-2">
+                    {' '}
                     {currentTextPair.existingLabel && (
-                      <p className="text-xs text-green-600">
+                      <p className="text-xs text-green-600 dark:text-green-400">
                         ✓ This text pair has been previously annotated
                       </p>
                     )}
                   </div>
                 )}
                 {!selectedLabel && currentTextPair.existingLabel && (
-                  <p className="text-xs text-yellow-600">
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400">
                     ⚠ This text pair was previously annotated with "
                     {currentTextPair.existingLabel}" but no label is currently
                     selected
@@ -321,18 +324,16 @@ export default function AnnotatePage() {
             >
               <ArrowLeft className="h-4 w-4" />
               Previous
-            </Button>
-
+            </Button>{' '}
             <Button
               variant="default"
               onClick={handleValidate}
               disabled={!selectedLabel}
-              className="bg-green-600 hover:bg-green-700 gap-2"
+              className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white gap-2"
             >
               <Check className="h-4 w-4" />
               Validate
             </Button>
-
             <Button
               variant="outline"
               onClick={handleNext}

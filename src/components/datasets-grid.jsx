@@ -733,7 +733,7 @@ export default function DatasetsGrid() {
                         id="file"
                         name="file"
                         type="file"
-                        accept=".csv,.json"
+                        accept=".csv,.json,.xlsx"
                         required
                       />
                       <p className="text-xs text-muted-foreground">
