@@ -213,14 +213,19 @@ const NotFound = () => {
     navigate(-1);
   };
 
+  // Get theme-aware colors for the fuzzy text
+  const isDarkMode = document.documentElement.classList.contains('dark');
+  const primaryTextColor = isDarkMode ? '#ffffff' : '#1f2937';
+  const secondaryTextColor = isDarkMode ? '#cccccc' : '#6b7280';
+
   return (
-    <div className="mt-20 bg-black flex flex-col items-center justify-center px-4 space-y-8">
+    <div className="mt-28 bg-background text-foreground flex flex-col items-center justify-center px-4 space-y-8 ">
       {/* Fuzzy 404 Text */}
       <div className="text-center">
         <FuzzyText
           fontSize="clamp(3rem, 15vw, 8rem)"
           fontWeight={900}
-          color="#ffffff"
+          color={primaryTextColor}
           baseIntensity={0.2}
           hoverIntensity={0.5}
           enableHover={true}
@@ -234,7 +239,7 @@ const NotFound = () => {
         <FuzzyText
           fontSize="clamp(1rem, 4vw, 2rem)"
           fontWeight={600}
-          color="#cccccc"
+          color={secondaryTextColor}
           baseIntensity={0.1}
           hoverIntensity={0.3}
           enableHover={true}
@@ -242,10 +247,10 @@ const NotFound = () => {
           Page Not Found
         </FuzzyText>
 
-        <p className="text-gray-400 text-lg">
+        <p className="text-muted-foreground text-lg">
           The page you are looking for does not exist.
         </p>
-        <p className="text-gray-500 text-sm">
+        <p className="text-muted-foreground/80 text-sm">
           Please check the URL or return to the homepage.
         </p>
       </div>
@@ -255,7 +260,7 @@ const NotFound = () => {
         <Button
           onClick={handleGoBack}
           variant="outline"
-          className="flex items-center space-x-2 min-w-[140px] bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
+          className="flex items-center space-x-2 min-w-[140px]"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Go Back</span>
@@ -263,13 +268,12 @@ const NotFound = () => {
 
         <Button
           onClick={handleGoHome}
-          className="flex items-center space-x-2 min-w-[140px] bg-white text-black hover:bg-gray-200"
+          className="flex items-center space-x-2 min-w-[140px]"
         >
           <Home className="w-4 h-4" />
           <span>Go Home</span>
         </Button>
       </div>
-
     </div>
   );
 };
