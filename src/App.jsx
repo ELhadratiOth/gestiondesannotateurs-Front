@@ -16,7 +16,7 @@ import AdminTasks from './components/pages/admin-tasks';
 import CoupleOfTextPage from './components/pages/couple-of-text';
 import FooterDashboard from './components/footer-dashboard';
 import AdminDashboard from './components/pages/dashboard';
-
+import NotFound from './components/pages/not-found';
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
@@ -220,6 +220,17 @@ function App() {
             ) : (
               <Navigate to="/auth" replace />
             )
+          }
+        />
+        {/* Catch-all route for 404 */}
+        <Route
+          path="*"
+          element={
+            <ProtectedRoute>
+              <BlockOfCompos>
+                <NotFound />
+              </BlockOfCompos>
+            </ProtectedRoute>
           }
         />
       </Routes>
