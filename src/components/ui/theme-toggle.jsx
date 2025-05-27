@@ -11,7 +11,7 @@ export const ThemeToggle = ({ variant = 'simple' }) => {
           variant="ghost"
           size="icon"
           onClick={toggleTheme}
-          className="relative h-9 w-9 rounded-md border-0 bg-transparent hover:bg-accent hover:text-accent-foreground group"
+          className="relative h-9 w-9 mt-1 rounded-md border-0 bg-transparent hover:bg-accent hover:text-accent-foreground group"
         >
           <Sun
             className={`h-[1.2rem] w-[1.2rem] ${isDark ? 'hidden' : 'block'}`}

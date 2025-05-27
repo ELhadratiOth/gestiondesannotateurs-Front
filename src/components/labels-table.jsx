@@ -63,7 +63,6 @@ export default function LabelsTable() {
       }
     } catch (error) {
       console.error('Error fetching labels:', error);
-      
     } finally {
       setLoading(false);
     }
@@ -84,14 +83,12 @@ export default function LabelsTable() {
 
       if (response.status === 200) {
         setLabels(prevLabels => prevLabels.filter(label => label.id !== id));
-        
       } else {
         throw new Error('Failed to delete label');
       }
     } catch (error) {
       console.error('Error deleting label:', error);
-      
-    } 
+    }
   };
 
   const handleInputChange = e => {
@@ -141,13 +138,11 @@ export default function LabelsTable() {
         });
         setFormErrors({});
         setIsDialogOpen(false);
-       
       } else {
         throw new Error('Failed to create label');
       }
     } catch (error) {
       console.error('Error creating label:', error);
-     
     } finally {
       setIsCreating(false);
     }
@@ -211,13 +206,13 @@ export default function LabelsTable() {
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="classes">Classes</Label>
+                <Label htmlFor="classes">Classes</Label>{' '}
                 <Textarea
                   id="classes"
                   name="classes"
                   value={newLabel.classes}
                   onChange={handleInputChange}
-                  placeholder="Enter classes (comma-separated)"
+                  placeholder="Enter classes separated by semicolons (e.g., positive; negative; neutral)"
                   className={formErrors.classes ? 'border-red-500' : ''}
                   rows={3}
                 />
@@ -270,10 +265,24 @@ export default function LabelsTable() {
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary">{label.name}</Badge>
                     </div>
-                  </TableCell>
+                  </TableCell>{' '}
                   <TableCell>
-                    <div className="max-w-xs truncate" title={label.classes}>
-                      {label.classes}
+                    <div className="flex flex-wrap gap-1 max-w-xs">
+                      {label.classes ? (
+                        label.classes.split(';').map((className, index) => (
+                          <Badge
+                            key={index}
+                            variant="outline"
+                            className="text-xs"
+                          >
+                            {className.trim()}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-muted-foreground text-sm">
+                          No classes
+                        </span>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell className="text-right">

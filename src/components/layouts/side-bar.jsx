@@ -11,9 +11,9 @@ import {
   Tag,
 } from 'lucide-react';
 
-import { cn } from '../lib/utils';
-import { Button } from './ui/button';
-import { ScrollArea } from './ui/scroll-area';
+import { cn } from '../../lib/utils';
+import { Button } from '../ui/button';
+import { ScrollArea } from '../ui/scroll-area';
 
 function SidebarItem({ icon, title, href, isActive }) {
   return (
@@ -39,7 +39,7 @@ export function AppSidebar({ userInfo }) {
       icon: <Home className="h-5 w-5" />,
       title: 'Dashboard',
       id: 'dashboard',
-      href: '/',
+      href: '/dashboard',
       roles: ['SUPER_ADMIN', 'ADMIN'],
     },
     {
@@ -71,13 +71,6 @@ export function AppSidebar({ userInfo }) {
       roles: ['SUPER_ADMIN', 'ADMIN'],
     },
     {
-      icon: <Table className="h-5 w-5" />,
-      title: 'Tables',
-      id: 'tables',
-      href: '/tables',
-      roles: ['SUPER_ADMIN', 'ADMIN', 'ANNOTATOR'],
-    },
-    {
       icon: <UserCheck className="h-5 w-5" />,
       title: 'Annotators',
       id: 'annotators',
@@ -105,19 +98,15 @@ export function AppSidebar({ userInfo }) {
       href: '/admin/tasks',
       roles: ['SUPER_ADMIN', 'ADMIN'],
     },
-
-    {
-      icon: <User className="h-5 w-5" />,
-      title: 'Profile',
-      id: 'profile',
-      href: '/profile',
-      roles: ['SUPER_ADMIN', 'ADMIN', 'ANNOTATOR'],
-    },
   ];
 
   return (
-    <aside className={cn('flex fixed  h-screen w-64 flex-col border-r bg-background')}>
-      <ScrollArea className="flex-1 px-3 py-4">
+    <aside
+      className={cn(
+        'flex fixed   h-screen w-64 flex-col border-r bg-background',
+      )}
+    >
+      <ScrollArea className="flex-1 px-3 py-4 relative">
         <div className="space-y-1">
           {sidebarItems
             .filter(item => item.roles.includes(userInfo.role))
@@ -127,8 +116,17 @@ export function AppSidebar({ userInfo }) {
                 icon={item.icon}
                 title={item.title}
                 href={item.href}
+                isActive={window.location.pathname === item.href}
               />
             ))}
+        </div>
+        <div className="border-t pt-4 absolute bottom-[10%] w-[95%] ">
+          <SidebarItem
+            icon={<User className="h-5 w-5" />}
+            title="Profile"
+            href="/profile"
+            isActive={window.location.pathname === '/profile'}
+          />
         </div>
       </ScrollArea>
     </aside>

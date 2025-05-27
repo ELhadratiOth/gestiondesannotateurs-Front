@@ -1,6 +1,6 @@
 import Navbar from './Navbar';
 import Footer from './Footer';
-import { AppSidebar } from '../side-bar';
+import { AppSidebar } from './side-bar';
 import { useAuth } from '../../context/AuthContext';
 
 const BlockOfCompos = ({ children }) => {
