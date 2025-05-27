@@ -1,38 +1,211 @@
-import React from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
+// eslint-disable-next-line
 import { motion } from 'framer-motion';
 
-export const AnimatedTitle = ({ className = '' }) => {
+const TrueFocus = ({
+  sentence = 'Annotation Manager',
+  manualMode = false,
+  blurAmount = 3,
+  borderColor = '#00ffff',
+  animationDuration = 0.6,
+  pauseBetweenAnimations = 2,
+}) => {
+  const words = sentence.split(' ');
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isHovering, setIsHovering] = useState(false);
+  const containerRef = useRef(null);
+  const wordRefs = useRef([]);
+  const [focusRect, setFocusRect] = useState({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  });
+  const intervalRef = useRef(null);
+
+  // Improved focus rectangle calculation
+  const updateFocusRect = useCallback(
+    index => {
+      if (index === null || index === -1 || index >= words.length) return;
+      if (!wordRefs.current[index] || !containerRef.current) return;
+
+      // Use requestAnimationFrame for better accuracy
+      requestAnimationFrame(() => {
+        const container = containerRef.current;
+        const activeElement = wordRefs.current[index];
+
+        if (!container || !activeElement) return;
+
+        const containerRect = container.getBoundingClientRect();
+        const activeRect = activeElement.getBoundingClientRect();
+
+        // Calculate relative position with better precision
+        const x = activeRect.left - containerRect.left;
+        const y = activeRect.top - containerRect.top;
+
+        setFocusRect({
+          x: x,
+          y: y,
+          width: activeRect.width,
+          height: activeRect.height,
+        });
+      });
+    },
+    [words.length],
+  );
+
+  // Auto-animation logic
+  useEffect(() => {
+    if (!manualMode && !isHovering) {
+      intervalRef.current = setInterval(() => {
+        setCurrentIndex(prev => (prev + 1) % words.length);
+      }, (animationDuration + pauseBetweenAnimations) * 1000);
+
+      return () => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+        }
+      };
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
+  }, [
+    manualMode,
+    isHovering,
+    animationDuration,
+    pauseBetweenAnimations,
+    words.length,
+  ]);
+
+  // Update focus rectangle when current index changes
+  useEffect(() => {
+    updateFocusRect(currentIndex);
+  }, [currentIndex, updateFocusRect]);
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      updateFocusRect(currentIndex);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [currentIndex, updateFocusRect]);
+  const handleMouseEnter = index => {
+    setIsHovering(true);
+    setCurrentIndex(index);
+  };
+
+  const handleContainerMouseLeave = () => {
+    setIsHovering(false);
+  };
+
+  return (
+    <div
+      className="relative flex gap-1 md:gap-2 justify-start items-center flex-wrap"
+      ref={containerRef}
+      onMouseLeave={handleContainerMouseLeave}
+      style={{ minHeight: '2rem' }}
+    >
+      {words.map((word, index) => {
+        const isActive = index === currentIndex;
+        return (
+          <span
+            key={index}
+            ref={el => (wordRefs.current[index] = el)}
+            className="relative text-base md:text-lg lg:text-xl font-bold cursor-pointer text-foreground select-none whitespace-nowrap"
+            style={{
+              filter: isActive ? 'blur(0px)' : `blur(${blurAmount}px)`,
+              transition: `filter ${animationDuration}s cubic-bezier(0.4, 0, 0.2, 1)`,
+              opacity: isActive ? 1 : 0.7,
+            }}
+            onMouseEnter={() => handleMouseEnter(index)}
+          >
+            {word}
+          </span>
+        );
+      })}
+
+      {/* Focus indicator */}
+      <motion.div
+        className="absolute pointer-events-none "
+        animate={{
+          x: focusRect.x - 6,
+          y: focusRect.y - 0,
+          width: focusRect.width + 14,
+          height: focusRect.height + 12,
+          opacity: currentIndex >= 0 && focusRect.width > 0 ? 1 : 0,
+        }}
+        transition={{
+          duration: animationDuration,
+          ease: [0.4, 0, 0.2, 1],
+        }}
+        style={{
+          borderRadius: '6px',
+        }}
+      >
+        {' '}
+        {/* Corner brackets */}
+        <span
+          className="absolute w-3 h-3 border-2 top-0 left-0 border-r-0 border-b-0"
+          style={{
+            borderColor: borderColor,
+            filter: `drop-shadow(0 0 6px ${borderColor})`,
+          }}
+        />
+        <span
+          className="absolute w-3 h-3 border-2 top-0 right-0 border-l-0 border-b-0"
+          style={{
+            borderColor: borderColor,
+            filter: `drop-shadow(0 0 6px ${borderColor})`,
+          }}
+        />
+        <span
+          className="absolute w-3 h-3 border-2 bottom-0 left-0 border-r-0 border-t-0"
+          style={{
+            borderColor: borderColor,
+            filter: `drop-shadow(0 0 6px ${borderColor})`,
+          }}
+        />
+        <span
+          className="absolute w-3 h-3 border-2 bottom-0 right-0 border-l-0 border-t-0"
+          style={{
+            borderColor: borderColor,
+            filter: `drop-shadow(0 0 6px ${borderColor})`,
+          }}
+        />
+      </motion.div>
+    </div>
+  );
+};
+
+export const AnimatedTitle = ({
+  className = '',
+  sentence = 'Annotation Manager',
+  manualMode = false,
+  ...props
+}) => {
   return (
     <div className={`flex items-center gap-2 font-semibold ${className}`}>
-      <span className="h-8 w-8 rounded-md bg-primary text-center text-lg font-bold leading-8 text-primary-foreground">
+      <span className="h-8 w-8 rounded-md bg-primary text-center text-lg font-bold leading-8 text-primary-foreground flex-shrink-0">
         A
       </span>
-      <span className="hidden md:inline-block relative">
-        Annotation{' '}
-        <span className="relative">
-          Manager
-          <svg
-            viewBox="0 0 286 73"
-            fill="none"
-            className="absolute -left-2 -right-2 -top-2 bottom-0 translate-y-1 h-6"
-          >
-            {' '}
-            <motion.path
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              whileInView={{ pathLength: 1 }}
-              viewport={{ once: false, amount: 0.1 }}
-              transition={{
-                duration: 1.25,
-                ease: 'easeInOut',
-              }}
-              d="M142.293 1C106.854 16.8908 6.08202 7.17705 1.23654 43.3756C-2.10604 68.3466 29.5633 73.2652 122.688 71.7518C215.814 70.2384 316.298 70.689 275.761 38.0785C230.14 1.37835 97.0503 24.4575 52.9384 1"
-              stroke="hsl(var(--primary))"
-              strokeWidth="2"
-              className="drop-shadow-sm"
-            />
-          </svg>
-        </span>
+      <div className="hidden md:inline-block min-w-0">
+        <TrueFocus
+          sentence={sentence}
+          manualMode={manualMode}
+          pauseBetweenAnimations={2.5}
+          animationDuration={0.6}
+          blurAmount={2}
+          {...props}
+        />
+      </div>
+      {/* Mobile fallback - simple text */}
+      <span className="md:hidden text-lg font-bold text-foreground">
+        Annotation Manager
       </span>
     </div>
   );
