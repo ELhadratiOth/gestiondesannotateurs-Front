@@ -20,7 +20,11 @@ import {
   Tag,
   Settings,
   Activity,
+  BarChart3,
 } from 'lucide-react';
+
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
+
 import API from '../api';
 
 const FooterDashboard = () => {
@@ -31,10 +35,55 @@ const FooterDashboard = () => {
     activeProjects: 0,
     pendingTasks: 0,
   });
+
+  const [annotatorStats, setAnnotatorStats] = useState({
+  min: { id: 0, value: 0 },
+  median: { id: 0, value: 0 },
+  max: { id: 0, value: 0 },
+});
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
+
+              const annotatorStatsResponse = await API.get('/api/annotators/stats');
+      
+      if (annotatorStatsResponse.status === 200 && annotatorStatsResponse.data.data) {
+        const statsData = annotatorStatsResponse.data.data;
+        
+        // Récupérer tous les IDs d'annotateurs de min, median et max
+        const minId = Object.keys(statsData.min)[0];
+        const medianId = Object.keys(statsData.median)[0];
+        const maxId = Object.keys(statsData.max)[0];
+        
+        // Récupérer les noms des annotateurs
+        const annotatorNamesResponse = await API.get('/api/annotators');
+        const annotators = annotatorNamesResponse.data.data || [];
+        
+        // Fonction pour trouver le nom de l'annotateur par ID
+        const findAnnotatorName = (id) => {
+          const annotator = annotators.find(a => a.id == id);
+          return annotator ? `${annotator.firstName} ${annotator.lastName}` : `Annotateur ${id}`;
+        };
+        
+        setAnnotatorStats({
+          min: { 
+            id: minId, 
+            value: Object.values(statsData.min)[0],
+            name: findAnnotatorName(minId)
+          },
+          median: { 
+            id: medianId, 
+            value: Object.values(statsData.median)[0],
+            name: findAnnotatorName(medianId)
+          },
+          max: { 
+            id: maxId, 
+            value: Object.values(statsData.max)[0],
+            name: findAnnotatorName(maxId)
+          }
+        });
+      }
         // Fetch last annotator data
         const lastAnnotatorResponse = await API.get('/api/annotators/last');
 
@@ -189,6 +238,13 @@ const FooterDashboard = () => {
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
 
+        // Fallback to mock data for annotator stats
+          setAnnotatorStats({
+          min: { id: "3", value: 1 },
+          median: { id: "5", value: 5 },
+          max: { id: "7", value: 8 },
+        });
+        
         // Fallback to mock data on error
         const mockActivity = [
           {
@@ -265,7 +321,31 @@ const FooterDashboard = () => {
     );
   }
 
-  return (
+  const prepareChartData = () => {
+  return [
+    {
+      name: annotatorStats.min.name,
+      value: annotatorStats.min.value,
+      id: annotatorStats.min.id,
+      fill: "#FDA4AF" // couleur rouge clair
+    },
+    {
+      name: annotatorStats.median.name,
+      value: annotatorStats.median.value,
+      id: annotatorStats.median.id,
+      fill: "#60A5FA" // couleur bleue
+    },
+    {
+      name: annotatorStats.max.name,
+      value: annotatorStats.max.value,
+      id: annotatorStats.max.id,
+      fill: "#34D399" // couleur verte
+    }
+  ];
+  };
+
+
+    return (
     <div className="space-y-6 mt-8">
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Management Hub</h2>
@@ -276,7 +356,7 @@ const FooterDashboard = () => {
 
       <div className="flex flex-col md:flex-row gap-6">
         {/* Recent Activity Card */}
-        <Card className="">
+        <Card className="flex-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-lg font-semibold">
               Recent Activity
@@ -349,9 +429,39 @@ const FooterDashboard = () => {
             </div>
           </CardContent>
         </Card>
+        
+        {/* Annotator Performance Card */}
+        <Card className="flex-1">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-lg font-semibold">
+              Performance des Annotateurs
+            </CardTitle>
+            <BarChart3 className="h-5 w-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground mb-4">
+              Nombre d'annotations par annotateur
+            </p>
+            <div className="h-[200px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={prepareChartData()} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
+                  <XAxis dataKey="name" tick={{fontSize: 12}} interval={0} />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip 
+                    formatter={(value, name, props) => [`${value} annotations`, `Annotateur ID: ${props.payload.id}`]}
+                    labelFormatter={() => ""}
+                  />
+                  <Bar dataKey="value" nameKey="name" fill="#4F46E5">
+                    <LabelList dataKey="value" position="top" fill="#374151" fontSize={12} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Platform Statistics Summary */}
+      {/* Platform Statistics Summary - code existant */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg font-semibold flex items-center">

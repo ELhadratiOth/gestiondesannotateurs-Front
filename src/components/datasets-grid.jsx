@@ -97,6 +97,11 @@ export default function DatasetsGrid() {
     labelId: 0,
   });
 
+  const [annotatorSpamScores, setAnnotatorSpamScores] = useState({});
+  const [isLoadingSpamScores, setIsLoadingSpamScores] = useState(false);
+  const [scanErrorMessage, setScanErrorMessage] = useState(null);
+
+
   // Use useCallback for data fetching functions to prevent unnecessary re-renders
   const fetchDatasetsCallback = useCallback(async () => {
     setIsLoading(true);
@@ -137,7 +142,7 @@ export default function DatasetsGrid() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, []); // Fetch annotators with useCallback
   const fetchAnnotatorsCallback = useCallback(async () => {
     try {
       console.log('Fetching annotators...');
@@ -145,7 +150,9 @@ export default function DatasetsGrid() {
       const result = response.data;
       console.log('Annotators response:', result);
 
+      // Try multiple response formats to handle different API structures
       if (result.status === 'success' && Array.isArray(result.data)) {
+        // Format 1: {status: 'success', data: [...]}
         const processedAnnotators = result.data.map(annotator => ({
           id: annotator.id,
           firstName: annotator.firstName || '',
@@ -157,6 +164,36 @@ export default function DatasetsGrid() {
 
         console.log(
           `Successfully processed ${processedAnnotators.length} annotators`,
+        );
+        setAnnotators(processedAnnotators);
+      } else if (Array.isArray(result)) {
+        // Format 2: Direct array response
+        const processedAnnotators = result.map(annotator => ({
+          id: annotator.id,
+          firstName: annotator.firstName || '',
+          lastName: annotator.lastName || '',
+          email: annotator.email || '',
+          active: annotator.active !== undefined ? annotator.active : true,
+          role: annotator.role || 'ANNOTATOR',
+        }));
+
+        console.log(
+          `Successfully processed ${processedAnnotators.length} annotators (direct array)`,
+        );
+        setAnnotators(processedAnnotators);
+      } else if (result.data && Array.isArray(result.data)) {
+        // Format 3: {data: [...]}
+        const processedAnnotators = result.data.map(annotator => ({
+          id: annotator.id,
+          firstName: annotator.firstName || '',
+          lastName: annotator.lastName || '',
+          email: annotator.email || '',
+          active: annotator.active !== undefined ? annotator.active : true,
+          role: annotator.role || 'ANNOTATOR',
+        }));
+
+        console.log(
+          `Successfully processed ${processedAnnotators.length} annotators (generic data property)`,
         );
         setAnnotators(processedAnnotators);
       } else {
@@ -175,23 +212,29 @@ export default function DatasetsGrid() {
       const response = await API.get('/api/labels');
       const result = response.data;
 
+      // Handle different possible API response formats
       if (Array.isArray(result)) {
+        // Direct array of labels
         setLabelsData(result);
       } else if (result.data && Array.isArray(result.data)) {
+        // Wrapped in a data property
         setLabelsData(result.data);
       } else if (result.status === 'success' && result.data) {
+        // Legacy format with status property
         setLabelsData(result.data);
       } else {
+        // Default to empty array if no valid data structure
         setLabelsData([]);
       }
 
       console.log('Labels loaded successfully');
     } catch (error) {
       console.error('Error fetching labels:', error);
-      setLabelsData([]);
+      setLabelsData([]); // Set empty array on error
     }
   }, []);
 
+  // Fetch datasets and annotators on component mount
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
@@ -211,6 +254,8 @@ export default function DatasetsGrid() {
     loadData();
   }, [fetchDatasetsCallback, fetchAnnotatorsCallback, fetchLabelsCallback]);
 
+  // Define refresh functions that can be used throughout the component
+  // We'll intentionally use these to allow for manual data refreshing
   const refreshDatasets = useCallback(() => {
     fetchDatasetsCallback();
   }, [fetchDatasetsCallback]);
@@ -223,6 +268,7 @@ export default function DatasetsGrid() {
     fetchAnnotatorsCallback();
   }, [fetchAnnotatorsCallback]);
 
+  // Add a general refresh function to refresh all data
   const refreshAllData = useCallback(() => {
     refreshDatasets();
     refreshLabels();
@@ -244,6 +290,7 @@ export default function DatasetsGrid() {
   const handleEditDataset = (datasetId, e) => {
     if (e) e.stopPropagation();
 
+    // Make sure we have a valid datasetId
     if (!datasetId) return;
 
     const dataset = datasets.find(d => d.datasetId === datasetId);
@@ -259,6 +306,7 @@ export default function DatasetsGrid() {
     }
   };
 
+  // Handle save edited dataset
   const handleSaveEditedDataset = async () => {
     if (!selectedDataset) return;
 
@@ -287,6 +335,7 @@ export default function DatasetsGrid() {
       setDatasets(updatedDatasets);
       setSelectedDataset(null);
 
+      // Refresh datasets after editing
       refreshDatasets();
     } catch (error) {
       console.error('Error updating dataset:', error);
@@ -295,6 +344,7 @@ export default function DatasetsGrid() {
     }
   };
 
+  // Handle delete dataset
   const handleDeleteDataset = async datasetId => {
     setIsDeleting(true);
     try {
@@ -305,6 +355,7 @@ export default function DatasetsGrid() {
         setDetailDataset(null);
       }
 
+      // Refresh datasets after deletion
       setTimeout(() => {
         refreshDatasets();
       }, 500);
@@ -323,6 +374,7 @@ export default function DatasetsGrid() {
         'Opening annotator assignment dialog for dataset:',
         datasetId,
       );
+      // Reset editFormData to make sure we show the annotator assignment dialog
       setEditFormData(null);
       setSelectedDataset(datasetId);
       setSelectedAnnotators(dataset.annotators?.map(a => a.id) || []);
@@ -336,9 +388,11 @@ export default function DatasetsGrid() {
         : [...prev, annotatorId],
     );
   };
+  // Handle save annotators
   const handleSaveAnnotators = async () => {
     if (!selectedDataset) return;
 
+    // Check if at least 3 annotators are selected
     if (selectedAnnotators.length < 3) {
       alert('Please select at least 3 annotators before assigning.');
       return;
@@ -346,11 +400,13 @@ export default function DatasetsGrid() {
 
     setIsAssigning(true);
     try {
+      // Format payload according to what the API endpoint expects
       const payload = {
         annotatorIds: selectedAnnotators,
         datasetId: selectedDataset,
       };
 
+      // Call the correct endpoint for tasks
       await API.post('/api/tasks', payload);
       console.log(
         'Assigned annotators:',
@@ -359,6 +415,7 @@ export default function DatasetsGrid() {
         selectedDataset,
       );
 
+      // Get annotator details for display
       const selectedAnnotatorsData = annotators
         .filter(annotator => selectedAnnotators.includes(annotator.id))
         .map(annotator => ({
@@ -370,6 +427,7 @@ export default function DatasetsGrid() {
           role: annotator.role || 'Annotator',
         }));
 
+      // Update local state
       setDatasets(
         datasets.map(dataset =>
           dataset.datasetId === selectedDataset
@@ -379,6 +437,7 @@ export default function DatasetsGrid() {
       );
       setSelectedDataset(null);
 
+      // Refresh data after assigning annotators
       refreshDatasets();
       refreshAnnotators();
     } catch (error) {
@@ -431,19 +490,58 @@ export default function DatasetsGrid() {
   const handleCardClick = datasetId => {
     setDetailDataset(datasetId);
   };
-  const handleScanAnnotators = (datasetId, e) => {
-    if (e) e.stopPropagation();
+const fetchSpamScores = async (datasetId) => {
+  setIsLoadingSpamScores(true);
+  setScanErrorMessage(null); // Réinitialiser le message d'erreur précédent
+  
+  try {
+    const response = await API.get(`/api/spams/scan/${datasetId}`);
+    const responseData = response.data;
+    
+    // Vérification si la réponse contient une erreur
+    if (responseData.status === "error") {
+      const errorMessage = responseData.erreurs?.[0] || "Une erreur est survenue lors de l'analyse des spammers";
+      setScanErrorMessage(errorMessage);
+      return {};
+    }
+    
+    // Si succès, récupérer les données
+    const scoresData = responseData.data;
+    console.log("Spam scores:", scoresData);
+    setAnnotatorSpamScores(scoresData);
+    return scoresData;
+  } catch (error) {
+    console.error("Error fetching spam scores:", error);
+    
+    // Récupérer le message d'erreur exact de la réponse API
+    const errorMessage = error.response?.data?.erreurs?.[0] || 
+                        error.response?.data?.message ||
+                        "Impossible de calculer les scores de spam";
+                        
+    setScanErrorMessage(errorMessage);
+    return {};
+  } finally {
+    setIsLoadingSpamScores(false);
+  }
+};
+  
 
-    // Always reset and set the scanning dataset and dialog state
-    setScanningDataset(datasetId);
-    setIsScanning(true);
-    setShowAnnotatorScan(true);
 
-    // Simulate scanning process
-    setTimeout(() => {
-      setIsScanning(false);
-    }, 1500);
-  };
+const handleScanAnnotators = async (datasetId, e) => {
+  if (e) e.stopPropagation();
+  setScanningDataset(datasetId);
+  setIsScanning(true);
+  setShowAnnotatorScan(true);
+  
+  try {
+    // Chargez les scores de spam
+    await fetchSpamScores(datasetId);
+  } catch (error) {
+    console.error("Error during scan:", error);
+  } finally {
+    setIsScanning(false);
+  }
+};
 
   // Navigate to couple of text page
   const handleViewCouplesOfText = (dataset, e) => {
@@ -682,7 +780,7 @@ export default function DatasetsGrid() {
                         id="file"
                         name="file"
                         type="file"
-                        accept=".csv,.json,.xlsx"
+                        accept=".csv,.json"
                         required
                       />
                       <p className="text-xs text-muted-foreground">
@@ -728,88 +826,7 @@ export default function DatasetsGrid() {
                 Add Dataset
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogHeader>
-                <DialogTitle>Add New Dataset</DialogTitle>
-                <DialogDescription>
-                  Upload a file and provide information to create a new dataset.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleAddDataset}>
-                <div className="grid gap-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name-empty">Dataset Name</Label>
-                    <div className="relative">
-                      <Database className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="name-empty"
-                        name="name"
-                        placeholder="Enter dataset name"
-                        className="pl-9"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description-empty">Description</Label>
-                    <Textarea
-                      id="description-empty"
-                      name="description"
-                      placeholder="Enter a description of your dataset"
-                      rows={3}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="labelId-empty">Label</Label>
-                    <Select defaultValue="1" name="labelId">
-                      <SelectTrigger id="labelId-empty">
-                        <SelectValue placeholder="Select label" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {labelsData.map(label => (
-                          <SelectItem
-                            key={label.id}
-                            value={label.id.toString()}
-                          >
-                            {label.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="file-empty">Upload Dataset File</Label>
-                    <div className="grid gap-2">
-                      <Input
-                        id="file-empty"
-                        name="file"
-                        type="file"
-                        accept=".csv,.json,.xlsx"
-                        required
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Supported formats: CSV, JSON, JSONL, XML, XLSX. Maximum
-                        file size: 100MB.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button type="button" variant="outline">
-                      Cancel
-                    </Button>
-                  </DialogClose>
-                  <Button type="submit" disabled={isCreating}>
-                    {isCreating ? 'Creating...' : 'Create Dataset'}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
+            <DialogContent className="sm:max-w-[600px]"></DialogContent>
           </Dialog>
         </div>
       ) : (
@@ -1555,156 +1572,176 @@ export default function DatasetsGrid() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {/* Scan Annotators Dialog */}{' '}
-      <Dialog
-        open={showAnnotatorScan}
-        onOpenChange={open => {
-          setShowAnnotatorScan(open);
-          if (!open) {
-            // Reset scanning state when dialog closes
-            setScanningDataset(null);
-            setIsScanning(false);
-          }
-        }}
-      >
-        <DialogContent className="sm:max-w-[700px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Scan className="h-5 w-5" />
-              Annotator Status Scan
-            </DialogTitle>
-            <DialogDescription>
-              {scanningDataset && (
-                <>
-                  Viewing annotator status for dataset:
-                  <span className="font-medium">
-                    {
-                      datasets.find(d => d.datasetId === scanningDataset)
-                        ?.datasetName
-                    }
-                  </span>
-                </>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          {isScanning ? (
-            <div className="py-8 text-center">
-              <RefreshCw className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
-              <p className="mt-4 text-sm text-muted-foreground">
-                Scanning annotator status...
+      {/* Scan Annotators Dialog */}
+     <Dialog open={showAnnotatorScan} onOpenChange={setShowAnnotatorScan}>
+  <DialogContent className="sm:max-w-[700px]">
+    <DialogHeader>
+      <DialogTitle className="flex items-center gap-2">
+        <Scan className="h-5 w-5" />
+        Annotator Status Scan
+      </DialogTitle>
+      <DialogDescription>
+        {scanningDataset && (
+          <>
+            Viewing annotator status for dataset:
+            <span className="font-medium">
+              {
+                datasets.find(d => d.datasetId === scanningDataset)
+                  ?.datasetName
+              }
+            </span>
+          </>
+        )}
+      </DialogDescription>
+    </DialogHeader>
+
+    {isScanning || isLoadingSpamScores ? (
+      <div className="py-8 text-center">
+        <RefreshCw className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
+        <p className="mt-4 text-sm text-muted-foreground">
+          Scanning annotators and detecting spammers...
+        </p>
+      </div>
+    ) : (
+      <div className="py-4">
+        {Object.keys(annotatorSpamScores).length === 0 && (
+          <div className="rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-900/30 p-4 my-4">
+            <div className="flex items-start">
+              <Info className="h-5 w-5 text-amber-500 mr-3 mt-0.5" />
+              <div>
+                <h3 className="font-medium text-amber-800 dark:text-amber-500">Impossible to scan the annotators </h3>
+                <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
+                  {scanErrorMessage}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {scanningDataset &&
+        getDatasetAnnotators(scanningDataset).length > 0 ? (
+          // Modification du tableau dans le Dialog pour toujours afficher la colonne Spam Probability
+<Table>
+  <TableHeader>
+    <TableRow>
+      <TableHead>Annotator</TableHead>
+      <TableHead>Status</TableHead>
+      <TableHead>Email</TableHead>
+      <TableHead>Is Spammer</TableHead>
+      <TableHead>Spam Probability</TableHead> {/* Toujours afficher cette colonne */}
+    </TableRow>
+  </TableHeader>
+  <TableBody>
+    {getDatasetAnnotators(scanningDataset).map(annotator => (
+      <TableRow key={annotator.id}>
+        <TableCell>
+          <div className="flex items-center gap-2">
+            <Avatar className="h-8 w-8">
+              <AvatarImage
+                src={`/placeholder.svg?height=32&width=32&text=${annotator.firstName.charAt(
+                  0,
+                )}${annotator.lastName.charAt(0)}`}
+              />
+              <AvatarFallback>
+                {annotator.firstName.charAt(0)}
+                {annotator.lastName.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-medium">
+                {annotator.firstName} {annotator.lastName}
               </p>
             </div>
-          ) : (
-            <div className="py-4">
-              {scanningDataset &&
-              getDatasetAnnotators(scanningDataset).length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Annotator</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Role</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {getDatasetAnnotators(scanningDataset).map(annotator => (
-                      <TableRow key={annotator.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage
-                                src={`/placeholder.svg?height=32&width=32&text=${annotator.firstName.charAt(
-                                  0,
-                                )}${annotator.lastName.charAt(0)}`}
-                              />
-                              <AvatarFallback>
-                                {annotator.firstName.charAt(0)}
-                                {annotator.lastName.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium">
-                                {annotator.firstName} {annotator.lastName}
-                              </p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={annotator.active ? 'default' : 'secondary'}
-                          >
-                            {annotator.active ? 'Active' : 'Inactive'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">{annotator.email}</div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{annotator.role}</Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="py-8 text-center">
-                  <Users className="mx-auto h-8 w-8 text-muted-foreground" />
-                  <p className="mt-4 text-sm text-muted-foreground">
-                    No annotators assigned to this dataset
-                  </p>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-2"
-                    onClick={() => {
-                      setShowAnnotatorScan(false);
-                      if (scanningDataset)
-                        handleAssignAnnotators(scanningDataset);
-                    }}
-                  >
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Assign Annotators
-                  </Button>
-                </div>
-              )}
+          </div>
+        </TableCell>
+        <TableCell>
+          <Badge
+            variant={annotator.active ? 'default' : 'secondary'}
+          >
+            {annotator.active ? 'Active' : 'Inactive'}
+          </Badge>
+        </TableCell>
+        <TableCell>
+          <div className="text-sm">{annotator.email}</div>
+        </TableCell>
+        <TableCell>
+          <Badge
+            variant={annotator.isSpammer ? 'destructive' : 'success'}
+          >
+            {annotator.isSpammer ? 'Yes' : 'No'}
+          </Badge>
+        </TableCell>
+        <TableCell>
+          <div className="w-full">
+            <div className="flex justify-between mb-1">
+              <span className="text-sm font-medium">
+                {annotatorSpamScores[annotator.id] 
+                  ? (annotatorSpamScores[annotator.id] * 100).toFixed(1) + '%' 
+                  : 'N/A'}
+              </span>
             </div>
-          )}{' '}
-          <DialogFooter>
+            {annotatorSpamScores[annotator.id] ? (
+              <Progress 
+                value={annotatorSpamScores[annotator.id] * 100} 
+                className={`h-2 ${annotatorSpamScores[annotator.id] > 0.3 ? "bg-red-500" : ""}`}
+              />
+            ) : (
+              <div className="h-2 w-full bg-muted rounded-full"></div>
+            )}
+          </div>
+        </TableCell>
+      </TableRow>
+    ))}
+  </TableBody>
+</Table>
+        ) : (
+          <div className="py-8 text-center">
+            <Users className="mx-auto h-8 w-8 text-muted-foreground" />
+            <p className="mt-4 text-sm text-muted-foreground">
+              No annotators assigned to this dataset
+            </p>
+
             <Button
               variant="outline"
+              size="sm"
+              className="mt-2"
               onClick={() => {
                 setShowAnnotatorScan(false);
-                setScanningDataset(null);
-                setIsScanning(false);
+                if (scanningDataset)
+                  handleAssignAnnotators(scanningDataset);
               }}
             >
-              Close
+              <UserPlus className="mr-2 h-4 w-4" />
+              Assign Annotators
             </Button>
-            {scanningDataset &&
-              getDatasetAnnotators(scanningDataset).length > 0 && (
-                <Button
-                  onClick={() => {
-                    // Store dataset ID temporarily before resetting dialog state
-                    const datasetToManage = scanningDataset;
-                    setShowAnnotatorScan(false);
-                    setScanningDataset(null);
-                    setIsScanning(false);
+          </div>
+        )}
+      </div>
+    )}
 
-                    // Use the stored dataset ID
-                    if (datasetToManage) {
-                      handleAssignAnnotators(datasetToManage);
-                    }
-                  }}
-                >
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Manage Annotators
-                </Button>
-              )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+    <DialogFooter>
+      <Button
+        variant="outline"
+        onClick={() => setShowAnnotatorScan(false)}
+      >
+        Close
+      </Button>
+      {/* {scanningDataset &&
+        getDatasetAnnotators(scanningDataset).length > 0 && (
+          <Button
+            onClick={() => {
+              setShowAnnotatorScan(false);
+              if (scanningDataset)
+                handleAssignAnnotators(scanningDataset);
+            }}
+          >
+            <UserPlus className="mr-2 h-4 w-4" />
+            Manage Annotators
+          </Button>
+        )} */}
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
     </div>
   );
 }
