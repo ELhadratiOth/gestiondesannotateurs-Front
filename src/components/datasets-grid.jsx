@@ -137,7 +137,7 @@ export default function DatasetsGrid() {
     } finally {
       setIsLoading(false);
     }
-  }, []); // Fetch annotators with useCallback
+  }, []);
   const fetchAnnotatorsCallback = useCallback(async () => {
     try {
       console.log('Fetching annotators...');
@@ -145,9 +145,7 @@ export default function DatasetsGrid() {
       const result = response.data;
       console.log('Annotators response:', result);
 
-      // Try multiple response formats to handle different API structures
       if (result.status === 'success' && Array.isArray(result.data)) {
-        // Format 1: {status: 'success', data: [...]}
         const processedAnnotators = result.data.map(annotator => ({
           id: annotator.id,
           firstName: annotator.firstName || '',
@@ -159,36 +157,6 @@ export default function DatasetsGrid() {
 
         console.log(
           `Successfully processed ${processedAnnotators.length} annotators`,
-        );
-        setAnnotators(processedAnnotators);
-      } else if (Array.isArray(result)) {
-        // Format 2: Direct array response
-        const processedAnnotators = result.map(annotator => ({
-          id: annotator.id,
-          firstName: annotator.firstName || '',
-          lastName: annotator.lastName || '',
-          email: annotator.email || '',
-          active: annotator.active !== undefined ? annotator.active : true,
-          role: annotator.role || 'ANNOTATOR',
-        }));
-
-        console.log(
-          `Successfully processed ${processedAnnotators.length} annotators (direct array)`,
-        );
-        setAnnotators(processedAnnotators);
-      } else if (result.data && Array.isArray(result.data)) {
-        // Format 3: {data: [...]}
-        const processedAnnotators = result.data.map(annotator => ({
-          id: annotator.id,
-          firstName: annotator.firstName || '',
-          lastName: annotator.lastName || '',
-          email: annotator.email || '',
-          active: annotator.active !== undefined ? annotator.active : true,
-          role: annotator.role || 'ANNOTATOR',
-        }));
-
-        console.log(
-          `Successfully processed ${processedAnnotators.length} annotators (generic data property)`,
         );
         setAnnotators(processedAnnotators);
       } else {
@@ -207,29 +175,23 @@ export default function DatasetsGrid() {
       const response = await API.get('/api/labels');
       const result = response.data;
 
-      // Handle different possible API response formats
       if (Array.isArray(result)) {
-        // Direct array of labels
         setLabelsData(result);
       } else if (result.data && Array.isArray(result.data)) {
-        // Wrapped in a data property
         setLabelsData(result.data);
       } else if (result.status === 'success' && result.data) {
-        // Legacy format with status property
         setLabelsData(result.data);
       } else {
-        // Default to empty array if no valid data structure
         setLabelsData([]);
       }
 
       console.log('Labels loaded successfully');
     } catch (error) {
       console.error('Error fetching labels:', error);
-      setLabelsData([]); // Set empty array on error
+      setLabelsData([]);
     }
   }, []);
 
-  // Fetch datasets and annotators on component mount
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
@@ -249,8 +211,6 @@ export default function DatasetsGrid() {
     loadData();
   }, [fetchDatasetsCallback, fetchAnnotatorsCallback, fetchLabelsCallback]);
 
-  // Define refresh functions that can be used throughout the component
-  // We'll intentionally use these to allow for manual data refreshing
   const refreshDatasets = useCallback(() => {
     fetchDatasetsCallback();
   }, [fetchDatasetsCallback]);
@@ -263,7 +223,6 @@ export default function DatasetsGrid() {
     fetchAnnotatorsCallback();
   }, [fetchAnnotatorsCallback]);
 
-  // Add a general refresh function to refresh all data
   const refreshAllData = useCallback(() => {
     refreshDatasets();
     refreshLabels();
@@ -285,7 +244,6 @@ export default function DatasetsGrid() {
   const handleEditDataset = (datasetId, e) => {
     if (e) e.stopPropagation();
 
-    // Make sure we have a valid datasetId
     if (!datasetId) return;
 
     const dataset = datasets.find(d => d.datasetId === datasetId);
@@ -301,7 +259,6 @@ export default function DatasetsGrid() {
     }
   };
 
-  // Handle save edited dataset
   const handleSaveEditedDataset = async () => {
     if (!selectedDataset) return;
 
@@ -330,7 +287,6 @@ export default function DatasetsGrid() {
       setDatasets(updatedDatasets);
       setSelectedDataset(null);
 
-      // Refresh datasets after editing
       refreshDatasets();
     } catch (error) {
       console.error('Error updating dataset:', error);
@@ -339,7 +295,6 @@ export default function DatasetsGrid() {
     }
   };
 
-  // Handle delete dataset
   const handleDeleteDataset = async datasetId => {
     setIsDeleting(true);
     try {
@@ -350,7 +305,6 @@ export default function DatasetsGrid() {
         setDetailDataset(null);
       }
 
-      // Refresh datasets after deletion
       setTimeout(() => {
         refreshDatasets();
       }, 500);
@@ -369,7 +323,6 @@ export default function DatasetsGrid() {
         'Opening annotator assignment dialog for dataset:',
         datasetId,
       );
-      // Reset editFormData to make sure we show the annotator assignment dialog
       setEditFormData(null);
       setSelectedDataset(datasetId);
       setSelectedAnnotators(dataset.annotators?.map(a => a.id) || []);
@@ -383,11 +336,9 @@ export default function DatasetsGrid() {
         : [...prev, annotatorId],
     );
   };
-  // Handle save annotators
   const handleSaveAnnotators = async () => {
     if (!selectedDataset) return;
 
-    // Check if at least 3 annotators are selected
     if (selectedAnnotators.length < 3) {
       alert('Please select at least 3 annotators before assigning.');
       return;
@@ -395,13 +346,11 @@ export default function DatasetsGrid() {
 
     setIsAssigning(true);
     try {
-      // Format payload according to what the API endpoint expects
       const payload = {
         annotatorIds: selectedAnnotators,
         datasetId: selectedDataset,
       };
 
-      // Call the correct endpoint for tasks
       await API.post('/api/tasks', payload);
       console.log(
         'Assigned annotators:',
@@ -410,7 +359,6 @@ export default function DatasetsGrid() {
         selectedDataset,
       );
 
-      // Get annotator details for display
       const selectedAnnotatorsData = annotators
         .filter(annotator => selectedAnnotators.includes(annotator.id))
         .map(annotator => ({
@@ -422,7 +370,6 @@ export default function DatasetsGrid() {
           role: annotator.role || 'Annotator',
         }));
 
-      // Update local state
       setDatasets(
         datasets.map(dataset =>
           dataset.datasetId === selectedDataset
@@ -432,7 +379,6 @@ export default function DatasetsGrid() {
       );
       setSelectedDataset(null);
 
-      // Refresh data after assigning annotators
       refreshDatasets();
       refreshAnnotators();
     } catch (error) {
@@ -487,10 +433,13 @@ export default function DatasetsGrid() {
   };
   const handleScanAnnotators = (datasetId, e) => {
     if (e) e.stopPropagation();
+
+    // Always reset and set the scanning dataset and dialog state
     setScanningDataset(datasetId);
     setIsScanning(true);
     setShowAnnotatorScan(true);
 
+    // Simulate scanning process
     setTimeout(() => {
       setIsScanning(false);
     }, 1500);
@@ -779,7 +728,88 @@ export default function DatasetsGrid() {
                 Add Dataset
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]"></DialogContent>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Add New Dataset</DialogTitle>
+                <DialogDescription>
+                  Upload a file and provide information to create a new dataset.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleAddDataset}>
+                <div className="grid gap-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name-empty">Dataset Name</Label>
+                    <div className="relative">
+                      <Database className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="name-empty"
+                        name="name"
+                        placeholder="Enter dataset name"
+                        className="pl-9"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="description-empty">Description</Label>
+                    <Textarea
+                      id="description-empty"
+                      name="description"
+                      placeholder="Enter a description of your dataset"
+                      rows={3}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="labelId-empty">Label</Label>
+                    <Select defaultValue="1" name="labelId">
+                      <SelectTrigger id="labelId-empty">
+                        <SelectValue placeholder="Select label" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {labelsData.map(label => (
+                          <SelectItem
+                            key={label.id}
+                            value={label.id.toString()}
+                          >
+                            {label.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="file-empty">Upload Dataset File</Label>
+                    <div className="grid gap-2">
+                      <Input
+                        id="file-empty"
+                        name="file"
+                        type="file"
+                        accept=".csv,.json,.xlsx"
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Supported formats: CSV, JSON, JSONL, XML, XLSX. Maximum
+                        file size: 100MB.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="outline">
+                      Cancel
+                    </Button>
+                  </DialogClose>
+                  <Button type="submit" disabled={isCreating}>
+                    {isCreating ? 'Creating...' : 'Create Dataset'}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
           </Dialog>
         </div>
       ) : (
@@ -1525,8 +1555,18 @@ export default function DatasetsGrid() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {/* Scan Annotators Dialog */}
-      <Dialog open={showAnnotatorScan} onOpenChange={setShowAnnotatorScan}>
+      {/* Scan Annotators Dialog */}{' '}
+      <Dialog
+        open={showAnnotatorScan}
+        onOpenChange={open => {
+          setShowAnnotatorScan(open);
+          if (!open) {
+            // Reset scanning state when dialog closes
+            setScanningDataset(null);
+            setIsScanning(false);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-[700px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -1547,7 +1587,6 @@ export default function DatasetsGrid() {
               )}
             </DialogDescription>
           </DialogHeader>
-
           {isScanning ? (
             <div className="py-8 text-center">
               <RefreshCw className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
@@ -1631,12 +1670,15 @@ export default function DatasetsGrid() {
                 </div>
               )}
             </div>
-          )}
-
+          )}{' '}
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setShowAnnotatorScan(false)}
+              onClick={() => {
+                setShowAnnotatorScan(false);
+                setScanningDataset(null);
+                setIsScanning(false);
+              }}
             >
               Close
             </Button>
@@ -1644,9 +1686,16 @@ export default function DatasetsGrid() {
               getDatasetAnnotators(scanningDataset).length > 0 && (
                 <Button
                   onClick={() => {
+                    // Store dataset ID temporarily before resetting dialog state
+                    const datasetToManage = scanningDataset;
                     setShowAnnotatorScan(false);
-                    if (scanningDataset)
-                      handleAssignAnnotators(scanningDataset);
+                    setScanningDataset(null);
+                    setIsScanning(false);
+
+                    // Use the stored dataset ID
+                    if (datasetToManage) {
+                      handleAssignAnnotators(datasetToManage);
+                    }
                   }}
                 >
                   <UserPlus className="mr-2 h-4 w-4" />

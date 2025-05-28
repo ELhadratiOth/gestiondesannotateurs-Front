@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 // eslint-disable-next-line
 import { motion } from 'framer-motion';
-
+import Logo from '/logo.png'; // Adjust the path as necessary
 const TrueFocus = ({
-  sentence = 'Annotation Manager',
+  sentence = 'Label Studio',
   manualMode = false,
   blurAmount = 3,
   borderColor = '#00ffff',
@@ -184,15 +184,13 @@ const TrueFocus = ({
 
 export const AnimatedTitle = ({
   className = '',
-  sentence = 'Annotation Manager',
+  sentence = 'Label Studio',
   manualMode = false,
   ...props
 }) => {
   return (
     <div className={`flex items-center gap-2 font-semibold ${className}`}>
-      <span className="h-8 w-8 rounded-md bg-primary text-center text-lg font-bold leading-8 text-primary-foreground flex-shrink-0">
-        A
-      </span>
+      <img src={Logo} width={43} />
       <div className="hidden md:inline-block min-w-0">
         <TrueFocus
           sentence={sentence}

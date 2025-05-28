@@ -1,6 +1,6 @@
 import { Route, Routes, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
-import LoginPage from './components/pages/LoginPage';
+import LoginPage from './components/pages/Login-page';
 import Space from './components/pages/space';
 import BlockOfCompos from './components/layouts/block-of-compos';
 import Datasets from './components/pages/datasets';
@@ -8,6 +8,7 @@ import Annotators from './components/pages/annotators';
 import Admins from './components/pages/admins';
 import Profile from './components/pages/profile';
 import Labels from './components/pages/labels';
+import Teams from './components/pages/teams';
 import ForgotPasswordPage from './components/forgot-password';
 import ForgotPasswordSuccessPage from './components/success-reset';
 import ResetPasswordPage from './components/reset-password';
@@ -16,7 +17,7 @@ import AdminTasks from './components/pages/admin-tasks';
 import CoupleOfTextPage from './components/pages/couple-of-text';
 import FooterDashboard from './components/footer-dashboard';
 import AdminDashboard from './components/pages/dashboard';
-import TrainPage from './components/pages/train'; 
+import TrainPage from './components/pages/train';
 
 import NotFound from './components/pages/not-found';
 const ProtectedRoute = ({ children }) => {
@@ -93,7 +94,7 @@ function App() {
               </BlockOfCompos>
             </ProtectedRoute>
           }
-        />
+        />{' '}
         <Route
           path="/train"
           element={
@@ -104,7 +105,16 @@ function App() {
             </ProtectedRoute>
           }
         />
-
+        <Route
+          path="/teams"
+          element={
+            <ProtectedRoute>
+              <BlockOfCompos>
+                <Teams />
+              </BlockOfCompos>
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/space"
           element={

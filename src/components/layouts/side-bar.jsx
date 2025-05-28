@@ -9,6 +9,15 @@ import {
   User,
   Shield,
   Tag,
+  UsersIcon,
+  Folder,
+  Target,
+  PenTool,
+  BookOpen,
+  Brain,
+  ClipboardList,
+  UserCog,
+  Settings,
 } from 'lucide-react';
 
 import { cn } from '../../lib/utils';
@@ -33,8 +42,7 @@ function SidebarItem({ icon, title, href, isActive }) {
   );
 }
 
-export function AppSidebar({ userInfo }) {
-  const sidebarItems = [
+export function AppSidebar({ userInfo }) {  const sidebarItems = [
     {
       icon: <Home className="h-5 w-5" />,
       title: 'Dashboard',
@@ -43,14 +51,14 @@ export function AppSidebar({ userInfo }) {
       roles: ['SUPER_ADMIN', 'ADMIN'],
     },
     {
-      icon: <Database className="h-5 w-5" />,
+      icon: <Folder className="h-5 w-5" />,
       title: 'Space',
       id: 'space',
       href: '/space',
       roles: ['ANNOTATOR'],
     },
     {
-      icon: <CheckSquare className="h-5 w-5" />,
+      icon: <ClipboardList className="h-5 w-5" />,
       title: 'My Tasks',
       id: 'my-tasks',
       href: '/my-tasks',
@@ -71,7 +79,7 @@ export function AppSidebar({ userInfo }) {
       roles: ['SUPER_ADMIN', 'ADMIN'],
     },
     {
-      icon: <UserCheck className="h-5 w-5" />,
+      icon: <PenTool className="h-5 w-5" />,
       title: 'Annotators',
       id: 'annotators',
       href: '/annotators',
@@ -79,20 +87,27 @@ export function AppSidebar({ userInfo }) {
     },
     {
       icon: <Users className="h-5 w-5" />,
+      title: 'Teams',
+      id: 'teams',
+      href: '/teams',
+      roles: ['SUPER_ADMIN', 'ADMIN'],
+    },
+    {
+      icon: <Brain className="h-5 w-5" />,
       title: 'Train',
       id: 'train',
       href: '/train',
       roles: ['SUPER_ADMIN', 'ADMIN'],
     },
     {
-      icon: <Shield className="h-5 w-5" />,
+      icon: <UserCog className="h-5 w-5" />,
       title: 'Admins',
       id: 'admin',
       href: '/admins',
       roles: ['SUPER_ADMIN'],
     },
     {
-      icon: <Database className="h-5 w-5" />,
+      icon: <Settings className="h-5 w-5" />,
       title: 'Admin Tasks',
       id: 'admin-tasks',
       href: '/admin/tasks',

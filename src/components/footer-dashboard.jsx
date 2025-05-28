@@ -43,17 +43,22 @@ const FooterDashboard = () => {
         // Fetch annotations count in last 24 hours
         const annotationsLast24hResponse = await API.get(
           '/api/annotations/count-last-24h',
-        );
-
-        // Fetch last completed task
+        ); // Fetch last completed task
         const lastTaskResponse = await API.get(
           '/api/tasks/last-task-completed',
         );
+
+        // Fetch last completed dataset
+        const lastDatasetResponse = await API.get(
+          '/api/datasets/last-dataset-completed',
+        );
+
         console.log(
           'Annotations in last 24h:',
           annotationsLast24hResponse.data,
         );
         console.log('Last completed task:', lastTaskResponse.data);
+        console.log('Last completed dataset:', lastDatasetResponse.data);
         let activityData = [];
 
         // Add last annotator activity - always show
@@ -110,7 +115,6 @@ const FooterDashboard = () => {
             taskTime = 'Waiting';
             taskUser = 'System';
           }
-
           activityData.push({
             id: 3,
             type: 'task',
@@ -121,13 +125,37 @@ const FooterDashboard = () => {
           });
         }
 
-        activityData.push({
-          id: 4,
-          type: 'dataset',
-          message: 'Dataset processing completed',
-          time: '4 hours ago',
-          user: 'Admin',
-        });
+        // Add last completed dataset activity - always show
+        if (lastDatasetResponse.status === 200) {
+          const lastDataset = lastDatasetResponse.data.data;
+
+          let datasetMessage, datasetTime, datasetUser;
+
+          if (lastDataset && lastDataset.datasetName) {
+            // There is a completed dataset
+            datasetMessage = `Dataset "${lastDataset.datasetName}" processing completed`;
+            datasetTime = lastDataset.createdAt
+              ? new Date(lastDataset.createdAt).toLocaleDateString()
+              : 'Recently';
+            datasetUser = lastDataset.labelName
+              ? `Label: ${lastDataset.labelName}`
+              : 'System';
+          } else {
+            datasetMessage = 'No datasets have been processed yet';
+            datasetTime = 'Waiting';
+            datasetUser = 'System';
+          }
+
+          activityData.push({
+            id: 4,
+            type: 'dataset',
+            message: datasetMessage,
+            time: datasetTime,
+            user: datasetUser,
+            hasData: !!lastDataset,
+            size: lastDataset?.sizeMB,
+          });
+        }
 
         setRecentActivity(activityData); // Use real stats data if available
         let recentAnnotationsCount = 0;
@@ -214,6 +242,10 @@ const FooterDashboard = () => {
         }
         return <FileText className="h-4 w-4 text-purple-600" />;
       case 'dataset':
+        // Show different icon based on whether there are processed datasets or not
+        if (!activity?.hasData) {
+          return <Clock className="h-4 w-4 text-gray-500" />;
+        }
         return <Database className="h-4 w-4 text-purple-600" />;
       default:
         return <Activity className="h-4 w-4 text-gray-600" />;
@@ -262,10 +294,12 @@ const FooterDashboard = () => {
                     {getActivityIcon(activity.type, activity)}
                   </div>
                   <div className="flex-1 space-y-1">
+                    {' '}
                     <p
                       className={`text-sm font-medium leading-none ${
                         (activity.type === 'task' && !activity.hasData) ||
-                        (activity.type === 'user' && !activity.hasData)
+                        (activity.type === 'user' && !activity.hasData) ||
+                        (activity.type === 'dataset' && !activity.hasData)
                           ? 'text-muted-foreground'
                           : ''
                       }`}
@@ -277,6 +311,14 @@ const FooterDashboard = () => {
                       <span>•</span>
                       <span>{activity.user}</span>
                       {activity.email && <span>{activity.email}</span>}
+                      {activity.size && (
+                        <>
+                          <span>•</span>
+                          <span className="text-blue-600 font-medium">
+                            {activity.size.toFixed(2)} MB
+                          </span>
+                        </>
+                      )}
                       {activity.active !== undefined && (
                         <>
                           <span>•</span>
