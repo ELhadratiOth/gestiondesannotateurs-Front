@@ -42,7 +42,8 @@ function SidebarItem({ icon, title, href, isActive }) {
   );
 }
 
-export function AppSidebar({ userInfo }) {  const sidebarItems = [
+export function AppSidebar({ userInfo }) {
+  const sidebarItems = [
     {
       icon: <Home className="h-5 w-5" />,
       title: 'Dashboard',
