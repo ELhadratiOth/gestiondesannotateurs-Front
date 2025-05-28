@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -244,7 +244,7 @@ const Teams = () => {
               key={team.teamId}
               className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-background to-background/50"
             >
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-1">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <CardTitle className="text-xl font-bold text-foreground group-hover:text-foreground transition-colors">
@@ -275,15 +275,6 @@ const Teams = () => {
               </CardHeader>
 
               <CardContent className="space-y-4">
-                {/* Dataset Name Highlight */}
-                <div className="bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-950/50 dark:to-slate-950/50 rounded-lg p-3 border border-gray-200 dark:border-gray-800">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-gray-600" />
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
-                      {team.datasetName}
-                    </span>
-                  </div>
-                </div>
 
                 {/* Progress Section */}
                 <div className="space-y-2">
