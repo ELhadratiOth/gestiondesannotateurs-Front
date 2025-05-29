@@ -21,6 +21,7 @@ import {
   Settings,
   Activity,
   BarChart3,
+  UserCheck,
 } from 'lucide-react';
 
 import { 
@@ -45,6 +46,17 @@ const FooterDashboard = () => {
     pendingTasks: 0,
   });
 
+  const [stats, setStats] = useState({
+    nbrOfAnnotators: 0,
+    activeAnnotators: 0,
+    totalUsers: 0,
+    totalTasks: 0,
+    assignedDatasets: 0,
+    pendingDatasets: 0,
+    nbrOfDatasets: 0,
+    finishedDatasets: 0
+  });
+
   const [annotatorStats, setAnnotatorStats] = useState({
     min: { id: 0, value: 0, name: "Aucun" },
     median: { id: 0, value: 0, name: "Aucun" },
@@ -55,6 +67,12 @@ const FooterDashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
+        // Fetch global stats data (ajout)
+        const statsResponse = await API.get('/api/stats');
+        if (statsResponse.status === 200) {
+          setStats(statsResponse.data.data);
+        }
+
         const annotatorStatsResponse = await API.get('/api/annotators/stats');
       
         if (annotatorStatsResponse.status === 200 && annotatorStatsResponse.data.data) {
@@ -99,9 +117,6 @@ const FooterDashboard = () => {
         // Fetch last annotator data
         const lastAnnotatorResponse = await API.get('/api/annotators/last');
 
-        // Fetch existing stats data
-        const statsResponse = await API.get('/api/stats');
-        
         // Fetch annotations count in last 24 hours
         const annotationsLast24hResponse = await API.get(
           '/api/annotations/count-last-24h',
@@ -357,6 +372,26 @@ const FooterDashboard = () => {
     ];
   };
 
+  // Définition des nouvelles cartes à afficher
+  const statCards = [
+    {
+      title: 'Total Annotators',
+      value: stats.nbrOfAnnotators,
+      description: `${stats.activeAnnotators} currently active`,
+      icon: Users,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100',
+    },
+    {
+      title: 'Total Users',
+      value: stats.totalUsers,
+      description: 'All accounts',
+      icon: UserCheck,
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-100',
+    },
+  ];
+
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
@@ -380,7 +415,7 @@ const FooterDashboard = () => {
       </div>
 
       <div className="grid grid-cols-12 gap-6">
-        {/* Recent Activity Card - reduced to 5 columns */}
+        {/* Recent Activity Card - 4 columns */}
         <Card className="col-span-4">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-lg font-semibold">
@@ -454,7 +489,7 @@ const FooterDashboard = () => {
           </CardContent>
         </Card>
                                                         
-        {/* Annotator Performance Card - reduced to 4 columns */}
+        {/* Annotator Performance Card - 4 columns */}
         <Card className="col-span-4">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-lg font-semibold">
@@ -488,9 +523,27 @@ const FooterDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* New empty space column - 3 columns */}
-        <div className="col-span-3">
-          {/* Space for additional content */}
+        {/* Cards des stats utilisateurs - 4 columns */}
+        <div className="col-span-4 space-y-4">
+          {statCards.map((card, index) => (
+            <Card key={index} className="shadow-sm">
+              <div className="flex p-4 items-center">
+                <div className={`${card.bgColor} p-3 rounded-full mr-4`}>
+                  <card.icon className={`h-5 w-5 ${card.color}`} />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-muted-foreground">
+                    {card.title}
+                  </h3>
+                  <div className="text-2xl font-bold mt-1">{card.value}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {card.description}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          ))}
+          
         </div>
       </div>
 
