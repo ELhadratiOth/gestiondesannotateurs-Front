@@ -102,7 +102,7 @@ export default function AdminCard() {
     {
       title: 'Pending Datasets',
       value: stats.pendingDatasets,
-      description: 'Not yet assigned',
+      description: 'Not yet finished',
       icon: Clock,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100',

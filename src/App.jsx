@@ -138,6 +138,16 @@ function App() {
           }
         />
         <Route
+          path="/annotate/:annotatorId/:taskId"
+          element={
+            <ProtectedRoute>
+              <BlockOfCompos>
+                <AnnotateCouples />
+              </BlockOfCompos>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/labels"
           element={
             <ProtectedRoute>
