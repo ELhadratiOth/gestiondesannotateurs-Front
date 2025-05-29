@@ -18,6 +18,8 @@ import CoupleOfTextPage from './components/pages/couple-of-text';
 import FooterDashboard from './components/footer-dashboard';
 import AdminDashboard from './components/pages/dashboard';
 import TrainPage from './components/pages/train';
+import AnnotatorTasks from "./components/pages/annotator-tasks";
+import AnnotateCouples from './components/pages/annotator-annotate';
 
 import NotFound from './components/pages/not-found';
 const ProtectedRoute = ({ children }) => {
@@ -121,6 +123,16 @@ function App() {
             <ProtectedRoute>
               <BlockOfCompos>
                 <Space />
+              </BlockOfCompos>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-tasks"
+          element={
+            <ProtectedRoute>
+              <BlockOfCompos>
+                <AnnotatorTasks/>
               </BlockOfCompos>
             </ProtectedRoute>
           }
