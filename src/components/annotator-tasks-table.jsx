@@ -226,12 +226,12 @@ export function AnnotatorTasksTable() {
                   <TableCell className="text-center">
                     <div className="flex flex-col items-center">
                       <div className="text-sm font-medium">
-                        {(task.progress * 100).toFixed(1)}%
+                        {(task.progress ).toFixed(1)}%
                       </div>
                       <div className="w-full bg-muted rounded-full h-2 mt-1">
                         <div
                           className="bg-primary h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${task.progress * 100}%` }}
+                          style={{ width: `${task.progress }%` }}
                         />
                       </div>
                     </div>

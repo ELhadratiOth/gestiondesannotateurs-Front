@@ -73,7 +73,7 @@ const FooterDashboard = () => {
           setStats(statsResponse.data.data);
         }
 
-        const annotatorStatsResponse = await API.get('/api/annotators/stats');
+        const annotatorStatsResponse = await API.get('/api/annotators/global-stats');
       
         if (annotatorStatsResponse.status === 200 && annotatorStatsResponse.data.data) {
           const statsData = annotatorStatsResponse.data.data;

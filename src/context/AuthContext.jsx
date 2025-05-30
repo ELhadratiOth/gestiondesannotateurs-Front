@@ -128,7 +128,6 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  // Context value
   const value = {
     user,
     loading,
