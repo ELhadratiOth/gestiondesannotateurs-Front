@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { ShieldAlert } from 'lucide-react';
 import {
   Home,
   Users,
@@ -92,6 +93,13 @@ export function AppSidebar({ userInfo }) {
       id: 'teams',
       href: '/teams',
       roles: ['SUPER_ADMIN', 'ADMIN'],
+    },
+    {
+     icon: <ShieldAlert className="h-5 w-5" />, // ou <Ban className="h-5 w-5" />
+     title: 'Blacklist',
+     id: 'blacklist',
+     href: '/blacklist',
+     roles: ['SUPER_ADMIN', 'ADMIN'],
     },
     {
       icon: <Brain className="h-5 w-5" />,
