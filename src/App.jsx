@@ -20,7 +20,7 @@ import AdminDashboard from './components/pages/dashboard';
 import TrainPage from './components/pages/train';
 import AnnotatorTasks from "./components/pages/annotator-tasks";
 import AnnotateCouples from './components/pages/annotator-annotate';
-import BlackList from "./components/pages/BlackList";
+import BlackList from "./components/pages/black-list";
 
 
 import NotFound from './components/pages/not-found';
@@ -201,7 +201,7 @@ function App() {
           path="/blacklist"
           element={
             <ProtectedRoute>
-                            <BlockOfCompos>
+                <BlockOfCompos>
 
               <BlackList />
               </BlockOfCompos>
