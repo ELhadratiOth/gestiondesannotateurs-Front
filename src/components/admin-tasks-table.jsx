@@ -32,7 +32,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import API from '../api';
 
-// Remove static data - will fetch from API instead
 export function TasksTable() {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
@@ -40,7 +39,6 @@ export function TasksTable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState(null);
 
-  // Fetch tasks from API
   useEffect(() => {
     const fetchTasks = async () => {
       setLoading(true);

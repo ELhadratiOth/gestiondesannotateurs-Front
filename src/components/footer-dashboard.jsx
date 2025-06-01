@@ -24,15 +24,15 @@ import {
   UserCheck,
 } from 'lucide-react';
 
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  ResponsiveContainer, 
-  LabelList, 
-  Cell 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  LabelList,
+  Cell,
 } from 'recharts';
 
 import API from '../api';
@@ -54,16 +54,16 @@ const FooterDashboard = () => {
     assignedDatasets: 0,
     pendingDatasets: 0,
     nbrOfDatasets: 0,
-    finishedDatasets: 0
+    finishedDatasets: 0,
   });
 
   const [annotatorStats, setAnnotatorStats] = useState({
-    min: { id: 0, value: 0, name: "Aucun" },
-    median: { id: 0, value: 0, name: "Aucun" },
-    max: { id: 0, value: 0, name: "Aucun" },
+    min: { id: 0, value: 0, name: 'Aucun' },
+    median: { id: 0, value: 0, name: 'Aucun' },
+    max: { id: 0, value: 0, name: 'Aucun' },
   });
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -73,45 +73,52 @@ const FooterDashboard = () => {
           setStats(statsResponse.data.data);
         }
 
-        const annotatorStatsResponse = await API.get('/api/annotators/global-stats');
-      
-        if (annotatorStatsResponse.status === 200 && annotatorStatsResponse.data.data) {
+        const annotatorStatsResponse = await API.get(
+          '/api/annotators/global-stats',
+        );
+
+        if (
+          annotatorStatsResponse.status === 200 &&
+          annotatorStatsResponse.data.data
+        ) {
           const statsData = annotatorStatsResponse.data.data;
-          
+
           // Récupérer tous les IDs d'annotateurs de min, median et max
           const minId = Object.keys(statsData.min)[0];
           const medianId = Object.keys(statsData.median)[0];
           const maxId = Object.keys(statsData.max)[0];
-          
+
           // Récupérer les noms des annotateurs
           const annotatorNamesResponse = await API.get('/api/annotators');
           const annotators = annotatorNamesResponse.data.data || [];
 
           console.log('Annotator Stats:', statsData);
           console.log('Annotators:', annotators);
-          
+
           // Fonction pour trouver le nom de l'annotateur par ID
-          const findAnnotatorName = (id) => {
+          const findAnnotatorName = id => {
             const annotator = annotators.find(a => a.id == id);
-            return annotator ? `${annotator.firstName} ${annotator.lastName}` : `Annotateur ${id}`;
+            return annotator
+              ? `${annotator.firstName} ${annotator.lastName}`
+              : `Annotateur ${id}`;
           };
-          
+
           setAnnotatorStats({
-            min: { 
-              id: minId, 
+            min: {
+              id: minId,
               value: Object.values(statsData.min)[0],
-              name: findAnnotatorName(minId)
+              name: findAnnotatorName(minId),
             },
-            median: { 
-              id: medianId, 
+            median: {
+              id: medianId,
               value: Object.values(statsData.median)[0],
-              name: findAnnotatorName(medianId)
+              name: findAnnotatorName(medianId),
             },
-            max: { 
-              id: maxId, 
+            max: {
+              id: maxId,
               value: Object.values(statsData.max)[0],
-              name: findAnnotatorName(maxId)
-            }
+              name: findAnnotatorName(maxId),
+            },
           });
         }
         // Fetch last annotator data
@@ -120,8 +127,8 @@ const FooterDashboard = () => {
         // Fetch annotations count in last 24 hours
         const annotationsLast24hResponse = await API.get(
           '/api/annotations/count-last-24h',
-        ); 
-        
+        );
+
         // Fetch last completed task
         const lastTaskResponse = await API.get(
           '/api/tasks/last-task-completed',
@@ -176,8 +183,8 @@ const FooterDashboard = () => {
             active: annotatorActive,
             hasData: !!lastAnnotator,
           });
-        } 
-        
+        }
+
         // Add last completed task activity - always show
         if (lastTaskResponse.status === 200) {
           const lastTask = lastTaskResponse.data.data;
@@ -214,7 +221,7 @@ const FooterDashboard = () => {
 
           if (lastDataset && lastDataset.datasetName) {
             // There is a completed dataset
-            datasetMessage = `Dataset "${lastDataset.datasetName}" processing completed`;
+            datasetMessage = `Dataset "${lastDataset.datasetName}" creation completed`;
             datasetTime = lastDataset.createdAt
               ? new Date(lastDataset.createdAt).toLocaleDateString()
               : 'Recently';
@@ -238,8 +245,8 @@ const FooterDashboard = () => {
           });
         }
 
-        setRecentActivity(activityData); 
-        
+        setRecentActivity(activityData);
+
         // Use real stats data if available
         let recentAnnotationsCount = 0;
         let pendingTasksCount = 0;
@@ -274,11 +281,11 @@ const FooterDashboard = () => {
 
         // Fallback to mock data for annotator stats
         setAnnotatorStats({
-          min: { id: "3", value: 1, name: "Annotateur 3" },
-          median: { id: "5", value: 5, name: "Annotateur 5" },
-          max: { id: "7", value: 8, name: "Annotateur 7" },
+          min: { id: '3', value: 1, name: 'Annotateur 3' },
+          median: { id: '5', value: 5, name: 'Annotateur 5' },
+          max: { id: '7', value: 8, name: 'Annotateur 7' },
         });
-        
+
         // Fallback to mock data on error
         const mockActivity = [
           {
@@ -317,7 +324,7 @@ const FooterDashboard = () => {
 
     fetchDashboardData();
   }, []);
-  
+
   const getActivityIcon = (type, activity) => {
     switch (type) {
       case 'user':
@@ -345,30 +352,30 @@ const FooterDashboard = () => {
 
   const prepareChartData = () => {
     // Extraire le prénom seulement pour l'affichage
-    const getFirstName = (fullName) => {
-      if (!fullName) return "Aucun";
+    const getFirstName = fullName => {
+      if (!fullName) return 'Aucun';
       return fullName.split(' ')[0];
     };
-    
+
     return [
       {
         name: getFirstName(annotatorStats.min.name),
         value: annotatorStats.min.value,
         id: annotatorStats.min.id,
-        fill: "#FDA4AF" // couleur rouge clair
+        fill: '#FDA4AF', // couleur rouge clair
       },
       {
         name: getFirstName(annotatorStats.median.name),
         value: annotatorStats.median.value,
         id: annotatorStats.median.id,
-        fill: "#60A5FA" // couleur bleue
+        fill: '#60A5FA', // couleur bleue
       },
       {
         name: getFirstName(annotatorStats.max.name),
         value: annotatorStats.max.value,
         id: annotatorStats.max.id,
-        fill: "#34D399" // couleur verte
-      }
+        fill: '#34D399', // couleur verte
+      },
     ];
   };
 
@@ -412,30 +419,30 @@ const FooterDashboard = () => {
         <p className="text-muted-foreground">
           Quick access to key platform features and recent activity overview.
         </p>
-      </div>
-
-      <div className="grid grid-cols-12 gap-6">
-        {/* Recent Activity Card - 4 columns */}
-        <Card className="col-span-4">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      </div>{' '}
+      <div className="grid grid-cols-12 gap-3">
+        {' '}
+        {/* Recent Activity Card - 6 columns */}
+        <Card className="col-span-6 h-[400px] flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 flex-shrink-0">
             <CardTitle className="text-lg font-semibold">
               Recent Activity
             </CardTitle>
             <Activity className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+          </CardHeader>{' '}
+          <CardContent className="p-3 flex-1 flex flex-col">
+            <div className="space-y-2 flex-1 overflow-y-auto">
               {recentActivity.map(activity => (
                 <div
                   key={activity.id}
-                  className="flex items-start space-x-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                  className="flex items-start space-x-2 p-2 rounded-lg border border-border"
                 >
-                  <div className="mt-1">
+                  <div className="mt-1 flex-shrink-0">
                     {getActivityIcon(activity.type, activity)}
                   </div>
-                  <div className="flex-1 space-y-1">
+                  <div className="flex-1 space-y-1 min-w-0">
                     <p
-                      className={`text-sm font-medium leading-none ${
+                      className={`text-sm font-medium leading-tight ${
                         (activity.type === 'task' && !activity.hasData) ||
                         (activity.type === 'user' && !activity.hasData) ||
                         (activity.type === 'dataset' && !activity.hasData)
@@ -445,41 +452,47 @@ const FooterDashboard = () => {
                     >
                       {activity.message}
                     </p>
-                    <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                      <span>{activity.time}</span>
-                      <span>•</span>
-                      <span>{activity.user}</span>
-                      {activity.email && <span>{activity.email}</span>}
-                      {activity.size && (
-                        <>
-                          <span>•</span>
-                          <span className="text-blue-600 font-medium">
-                            {activity.size.toFixed(2)} MB
-                          </span>
-                        </>
-                      )}
-                      {activity.active !== undefined && (
-                        <>
-                          <span>•</span>
-                          <span
-                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              activity.active
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            {activity.active ? 'Active' : 'Inactive'}
-                          </span>
-                        </>
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                        <span>{activity.time}</span>
+                        <span>•</span>
+                        <span>{activity.user}</span>
+                      </div>
+                      {(activity.email ||
+                        activity.size ||
+                        activity.active !== undefined) && (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                          {activity.email && (
+                            <span className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                              {activity.email}
+                            </span>
+                          )}
+                          {activity.size && (
+                            <span className="bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-2 py-1 rounded font-medium">
+                              {activity.size.toFixed(2)} MB
+                            </span>
+                          )}
+                          {activity.active !== undefined && (
+                            <span
+                              className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                                activity.active
+                                  ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200'
+                                  : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200'
+                              }`}
+                            >
+                              {activity.active ? 'Active' : 'Inactive'}
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
                 </div>
-              ))}
+              ))}{' '}
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full mt-2"
+                className="w-full mt-4 flex-shrink-0"
                 onClick={() => navigate('/admin/tasks')}
               >
                 View All Activity
@@ -487,66 +500,91 @@ const FooterDashboard = () => {
               </Button>
             </div>
           </CardContent>
-        </Card>
-                                                        
-        {/* Annotator Performance Card - 4 columns */}
-        <Card className="col-span-4">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-semibold">
-              Performance of Annotators
-            </CardTitle>
-            <BarChart3 className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground mb-4">
-              Top Average and Last annotator performance
-            </p>
-            <div className="h-[200px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={prepareChartData()} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
-                  <XAxis dataKey="name" tick={{fontSize: 12}} interval={0} />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip 
-                    formatter={(value, name, props) => [`${value} annotations`, `${props.payload.name}`]}
-                    labelFormatter={() => ""}
-                  />
-                  {/* Modified Bar to use item colors and show by default without hover */}
-                  <Bar dataKey="value" nameKey="name" fillOpacity={0.9}>
-                    {prepareChartData().map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                    <LabelList dataKey="value" position="top" fill="#374151" fontSize={12} />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Cards des stats utilisateurs - 4 columns */}
-        <div className="col-span-4 space-y-4">
-          {statCards.map((card, index) => (
-            <Card key={index} className="shadow-sm">
-              <div className="flex p-4 items-center">
-                <div className={`${card.bgColor} p-3 rounded-full mr-4`}>
-                  <card.icon className={`h-5 w-5 ${card.color}`} />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    {card.title}
-                  </h3>
-                  <div className="text-2xl font-bold mt-1">{card.value}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {card.description}
-                  </p>
-                </div>
+        </Card>{' '}
+        {/* Right column - Performance Chart and Stats stacked vertically */}
+        <div className="col-span-6 h-[400px] flex flex-col gap-3">
+          {/* Annotator Performance Card - 70% height */}
+          <Card className="h-[70%] flex flex-col">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 flex-shrink-0">
+              <CardTitle className="text-lg font-semibold">
+                Performance of Annotators
+              </CardTitle>
+              <BarChart3 className="h-5 w-5 text-muted-foreground" />
+            </CardHeader>
+            <CardContent className="p-2 flex-1 flex flex-col">
+              <p className="text-xs text-muted-foreground mb-2 flex-shrink-0">
+                Top Average and Last annotator performance
+              </p>
+              <div className="flex-1 w-full min-h-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={prepareChartData()}
+                    margin={{ top: 20, right: 10, left: -20, bottom: 5 }}
+                  >
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 12 }}
+                      interval={0}
+                    />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip
+                      formatter={(value, name, props) => [
+                        `${value} annotations`,
+                        `${props.payload.name}`,
+                      ]}
+                      labelFormatter={() => ''}
+                    />
+                    <Bar
+                      dataKey="value"
+                      nameKey="name"
+                      fillOpacity={0.9}
+                      radius={[4, 4, 0, 0]}
+                    >
+                      {prepareChartData().map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                      <LabelList
+                        dataKey="value"
+                        position="top"
+                        fill="#374151"
+                        fontSize={12}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
-            </Card>
-          ))}
-          
+            </CardContent>
+          </Card>
+          {/* User Stats Cards - 30% height */}
+          <div className="h-[30%] flex flex-row gap-2">
+            {statCards.map((card, index) => (
+              <Card
+                key={index}
+                className="flex-1 shadow-sm hover:shadow-md transition-shadow duration-200 border-l-4 border-l-cyan-500"
+              >
+                <CardContent className="p-3 h-full">
+                  <div className="flex items-center justify-between h-full">
+                    <div className="space-y-1 flex-1 min-w-0">
+                      <p className="text-xs font-medium text-muted-foreground truncate">
+                        {card.title}
+                      </p>
+                      <p className="text-lg font-bold">{card.value}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {card.description}
+                      </p>
+                    </div>
+                    <div
+                      className={`${card.bgColor} dark:bg-opacity-20 p-2 rounded-xl flex-shrink-0 ml-2`}
+                    >
+                      <card.icon className={`h-4 w-4 ${card.color}`} />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
-      </div>
-
+      </div>{' '}
       {/* Platform Statistics Summary - full width */}
       <Card>
         <CardHeader>
@@ -558,28 +596,43 @@ const FooterDashboard = () => {
             Quick insights into platform performance
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="text-center p-4 border rounded-lg hover:bg-blue-50 transition-colors">
-              <div className="text-2xl font-bold text-blue-600">
-                {quickStats.recentAnnotations}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Annotations (Last 24h)
-              </p>
-            </div>
-            <div className="text-center p-4 border rounded-lg">
-              <div className="text-2xl font-bold text-green-600">
-                {quickStats.activeProjects}
-              </div>
-              <p className="text-sm text-muted-foreground">Active Projects</p>
-            </div>
-            <div className="text-center p-4 border rounded-lg">
-              <div className="text-2xl font-bold text-orange-600">
-                {quickStats.pendingTasks}
-              </div>
-              <p className="text-sm text-muted-foreground">Pending Tasks</p>
-            </div>
+        <CardContent className="p-6">
+          <div className="grid gap-6 md:grid-cols-3">
+            <Card className="border">
+              <CardContent className="p-6 text-center">
+                <div className="bg-blue-500 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Activity className="h-6 w-6 text-white" />
+                </div>
+                <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                  {quickStats.recentAnnotations}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Annotations (Last 24h)
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border">
+              <CardContent className="p-6 text-center">
+                <div className="bg-green-500 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Database className="h-6 w-6 text-white" />
+                </div>
+                <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
+                  {quickStats.activeProjects}
+                </div>
+                <p className="text-sm text-muted-foreground">Active Projects</p>
+              </CardContent>
+            </Card>
+            <Card className="border">
+              <CardContent className="p-6 text-center">
+                <div className="bg-orange-500 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Clock className="h-6 w-6 text-white" />
+                </div>
+                <div className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-2">
+                  {quickStats.pendingTasks}
+                </div>
+                <p className="text-sm text-muted-foreground">Pending Tasks</p>
+              </CardContent>
+            </Card>
           </div>
         </CardContent>
       </Card>

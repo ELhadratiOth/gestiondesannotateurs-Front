@@ -154,7 +154,10 @@ export default function Space() {
 
       <div className="space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">
-          {getGreeting()}, {stats.firstName} {stats.lastName}!
+          {getGreeting()},
+          <span className="capitalize">
+             {stats.firstName} {stats.lastName}!
+          </span>
         </h2>
         <p className="text-muted-foreground">
           Welcome back! Ready to make an impact today?
@@ -165,7 +168,8 @@ export default function Space() {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Your account has been flagged for suspicious annotation patterns. Please review our guidelines.
+            Your account has been flagged for suspicious annotation patterns.
+            Please review our guidelines.
           </AlertDescription>
         </Alert>
       )}
@@ -175,20 +179,32 @@ export default function Space() {
           title="Tasks Completed"
           value={`${stats.tasksCompleted}/${stats.totalTasks}`}
           icon={<Check />}
-          progress={stats.totalTasks > 0 ? Math.round((stats.tasksCompleted / stats.totalTasks) * 100) : 0}
+          progress={
+            stats.totalTasks > 0
+              ? Math.round((stats.tasksCompleted / stats.totalTasks) * 100)
+              : 0
+          }
         />
 
         <StatCard
           title="Accuracy Rate"
           value={`${stats.accuracyRate}%`}
-          description={stats.accuracyRate > 80 ? "Excellent work!" : stats.accuracyRate > 50 ? "Good job!" : "Keep practicing!"}
+          description={
+            stats.accuracyRate > 80
+              ? 'Excellent work!'
+              : stats.accuracyRate > 50
+              ? 'Good job!'
+              : 'Keep practicing!'
+          }
           icon={<Target />}
         />
 
         <StatCard
           title="Daily Streak"
           value={`${stats.dailyStreak} days`}
-          description={stats.dailyStreak > 3 ? "Keep it going!" : "Start your streak!"}
+          description={
+            stats.dailyStreak > 3 ? 'Keep it going!' : 'Start your streak!'
+          }
           icon={<Calendar />}
         />
 

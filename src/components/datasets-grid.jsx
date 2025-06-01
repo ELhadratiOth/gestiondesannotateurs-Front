@@ -90,6 +90,7 @@ export default function DatasetsGrid() {
   const [isCreating, setIsCreating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [labelsData, setLabelsData] = useState([]);
   const [editFormData, setEditFormData] = useState({
     name: '',
@@ -100,7 +101,6 @@ export default function DatasetsGrid() {
   const [annotatorSpamScores, setAnnotatorSpamScores] = useState({});
   const [isLoadingSpamScores, setIsLoadingSpamScores] = useState(false);
   const [scanErrorMessage, setScanErrorMessage] = useState(null);
-
 
   // Use useCallback for data fetching functions to prevent unnecessary re-renders
   const fetchDatasetsCallback = useCallback(async () => {
@@ -490,58 +490,59 @@ export default function DatasetsGrid() {
   const handleCardClick = datasetId => {
     setDetailDataset(datasetId);
   };
-const fetchSpamScores = async (datasetId) => {
-  setIsLoadingSpamScores(true);
-  setScanErrorMessage(null); // Réinitialiser le message d'erreur précédent
-  
-  try {
-    const response = await API.get(`/api/spams/scan/${datasetId}`);
-    const responseData = response.data;
-    
-    // Vérification si la réponse contient une erreur
-    if (responseData.status === "error") {
-      const errorMessage = responseData.erreurs?.[0] || "Une erreur est survenue lors de l'analyse des spammers";
+  const fetchSpamScores = async datasetId => {
+    setIsLoadingSpamScores(true);
+    setScanErrorMessage(null); // Réinitialiser le message d'erreur précédent
+
+    try {
+      const response = await API.get(`/api/spams/scan/${datasetId}`);
+      const responseData = response.data;
+
+      // Vérification si la réponse contient une erreur
+      if (responseData.status === 'error') {
+        const errorMessage =
+          responseData.erreurs?.[0] ||
+          "Une erreur est survenue lors de l'analyse des spammers";
+        setScanErrorMessage(errorMessage);
+        return {};
+      }
+
+      // Si succès, récupérer les données
+      const scoresData = responseData.data;
+      console.log('Spam scores:', scoresData);
+      setAnnotatorSpamScores(scoresData);
+      return scoresData;
+    } catch (error) {
+      console.error('Error fetching spam scores:', error);
+
+      // Récupérer le message d'erreur exact de la réponse API
+      const errorMessage =
+        error.response?.data?.erreurs?.[0] ||
+        error.response?.data?.message ||
+        'Impossible de calculer les scores de spam';
+
       setScanErrorMessage(errorMessage);
       return {};
+    } finally {
+      setIsLoadingSpamScores(false);
     }
-    
-    // Si succès, récupérer les données
-    const scoresData = responseData.data;
-    console.log("Spam scores:", scoresData);
-    setAnnotatorSpamScores(scoresData);
-    return scoresData;
-  } catch (error) {
-    console.error("Error fetching spam scores:", error);
-    
-    // Récupérer le message d'erreur exact de la réponse API
-    const errorMessage = error.response?.data?.erreurs?.[0] || 
-                        error.response?.data?.message ||
-                        "Impossible de calculer les scores de spam";
-                        
-    setScanErrorMessage(errorMessage);
-    return {};
-  } finally {
-    setIsLoadingSpamScores(false);
-  }
-};
-  
+  };
 
+  const handleScanAnnotators = async (datasetId, e) => {
+    if (e) e.stopPropagation();
+    setScanningDataset(datasetId);
+    setIsScanning(true);
+    setShowAnnotatorScan(true);
 
-const handleScanAnnotators = async (datasetId, e) => {
-  if (e) e.stopPropagation();
-  setScanningDataset(datasetId);
-  setIsScanning(true);
-  setShowAnnotatorScan(true);
-  
-  try {
-    // Chargez les scores de spam
-    await fetchSpamScores(datasetId);
-  } catch (error) {
-    console.error("Error during scan:", error);
-  } finally {
-    setIsScanning(false);
-  }
-};
+    try {
+      // Chargez les scores de spam
+      await fetchSpamScores(datasetId);
+    } catch (error) {
+      console.error('Error during scan:', error);
+    } finally {
+      setIsScanning(false);
+    }
+  };
 
   // Navigate to couple of text page
   const handleViewCouplesOfText = (dataset, e) => {
@@ -679,13 +680,47 @@ const handleScanAnnotators = async (datasetId, e) => {
     if (!sizeInMB) return 'Unknown size';
     return `${sizeInMB} MB`;
   };
-
-  const handleDownloadDataset = datasetId => {
+  const handleDownloadDataset = async datasetId => {
     if (!datasetId) return;
 
-    const downloadUrl = `${API.defaults.baseURL}/api/datasets/download/${datasetId}`;
-    window.open(downloadUrl, '_blank');
-    console.log(`Downloading dataset with ID: ${datasetId}`);
+    setIsDownloading(true);
+    try {
+      const response = await API.get(`/api/datasets/download/${datasetId}`, {
+        responseType: 'blob',
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+
+      // Extract filename from response headers or use default
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = `dataset_${datasetId}.csv`;
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading dataset:', err);
+
+      if (err.response && err.response.status === 404) {
+        alert(
+          'Dataset cannot be downloaded. The annotation is not yet complete. Please ensure all text pairs are annotated before downloading.',
+        );
+      } else {
+        alert('Error downloading dataset. Please try again.');
+      }
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -909,15 +944,16 @@ const handleScanAnnotators = async (datasetId, e) => {
                       >
                         <Scan className="mr-2 h-4 w-4" />
                         Scan Annotators
-                      </DropdownMenuItem>
+                      </DropdownMenuItem>{' '}
                       <DropdownMenuItem
                         onClick={e => {
                           e.stopPropagation();
                           handleDownloadDataset(dataset.datasetId);
                         }}
+                        disabled={isDownloading}
                       >
                         <Download className="mr-2 h-4 w-4" />
-                        Download
+                        {isDownloading ? 'Downloading...' : 'Download'}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
@@ -1303,10 +1339,13 @@ const handleScanAnnotators = async (datasetId, e) => {
               >
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
-              </Button>
-              <Button onClick={() => handleDownloadDataset(detailDataset)}>
+              </Button>{' '}
+              <Button
+                onClick={() => handleDownloadDataset(detailDataset)}
+                disabled={isDownloading}
+              >
                 <Download className="mr-2 h-4 w-4" />
-                Download
+                {isDownloading ? 'Downloading...' : 'Download'}
               </Button>
             </div>
           </DialogFooter>
@@ -1573,160 +1612,171 @@ const handleScanAnnotators = async (datasetId, e) => {
         </DialogContent>
       </Dialog>
       {/* Scan Annotators Dialog */}
-     <Dialog open={showAnnotatorScan} onOpenChange={setShowAnnotatorScan}>
-  <DialogContent className="sm:max-w-[700px]">
-    <DialogHeader>
-      <DialogTitle className="flex items-center gap-2">
-        <Scan className="h-5 w-5" />
-        Annotator Status Scan
-      </DialogTitle>
-      <DialogDescription>
-        {scanningDataset && (
-          <>
-            Viewing annotator status for dataset:
-            <span className="font-medium">
-              {
-                datasets.find(d => d.datasetId === scanningDataset)
-                  ?.datasetName
-              }
-            </span>
-          </>
-        )}
-      </DialogDescription>
-    </DialogHeader>
+      <Dialog open={showAnnotatorScan} onOpenChange={setShowAnnotatorScan}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Scan className="h-5 w-5" />
+              Annotator Status Scan
+            </DialogTitle>
+            <DialogDescription>
+              {scanningDataset && (
+                <>
+                  Viewing annotator status for dataset:
+                  <span className="font-medium">
+                    {
+                      datasets.find(d => d.datasetId === scanningDataset)
+                        ?.datasetName
+                    }
+                  </span>
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
 
-    {isScanning || isLoadingSpamScores ? (
-      <div className="py-8 text-center">
-        <RefreshCw className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
-        <p className="mt-4 text-sm text-muted-foreground">
-          Scanning annotators and detecting spammers...
-        </p>
-      </div>
-    ) : (
-      <div className="py-4">
-        {Object.keys(annotatorSpamScores).length === 0 && (
-          <div className="rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-900/30 p-4 my-4">
-            <div className="flex items-start">
-              <Info className="h-5 w-5 text-amber-500 mr-3 mt-0.5" />
-              <div>
-                <h3 className="font-medium text-amber-800 dark:text-amber-500">Impossible to scan the annotators </h3>
-                <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
-                  {scanErrorMessage}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {scanningDataset &&
-        getDatasetAnnotators(scanningDataset).length > 0 ? (
-          // Modification du tableau dans le Dialog pour toujours afficher la colonne Spam Probability
-<Table>
-  <TableHeader>
-    <TableRow>
-      <TableHead>Annotator</TableHead>
-      <TableHead>Status</TableHead>
-      <TableHead>Email</TableHead>
-      <TableHead>Is Spammer</TableHead>
-      <TableHead>Spam Probability</TableHead> {/* Toujours afficher cette colonne */}
-    </TableRow>
-  </TableHeader>
-  <TableBody>
-    {getDatasetAnnotators(scanningDataset).map(annotator => (
-      <TableRow key={annotator.id}>
-        <TableCell>
-          <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8">
-              <AvatarImage
-                src={`/placeholder.svg?height=32&width=32&text=${annotator.firstName.charAt(
-                  0,
-                )}${annotator.lastName.charAt(0)}`}
-              />
-              <AvatarFallback>
-                {annotator.firstName.charAt(0)}
-                {annotator.lastName.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="font-medium">
-                {annotator.firstName} {annotator.lastName}
+          {isScanning || isLoadingSpamScores ? (
+            <div className="py-8 text-center">
+              <RefreshCw className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
+              <p className="mt-4 text-sm text-muted-foreground">
+                Scanning annotators and detecting spammers...
               </p>
             </div>
-          </div>
-        </TableCell>
-        <TableCell>
-          <Badge
-            variant={annotator.active ? 'default' : 'secondary'}
-          >
-            {annotator.active ? 'Active' : 'Inactive'}
-          </Badge>
-        </TableCell>
-        <TableCell>
-          <div className="text-sm">{annotator.email}</div>
-        </TableCell>
-        <TableCell>
-          <Badge
-            variant={annotator.isSpammer ? 'destructive' : 'success'}
-          >
-            {annotator.isSpammer ? 'Yes' : 'No'}
-          </Badge>
-        </TableCell>
-        <TableCell>
-          <div className="w-full">
-            <div className="flex justify-between mb-1">
-              <span className="text-sm font-medium">
-                {annotatorSpamScores[annotator.id] 
-                  ? (annotatorSpamScores[annotator.id] * 100).toFixed(1) + '%' 
-                  : 'N/A'}
-              </span>
-            </div>
-            {annotatorSpamScores[annotator.id] ? (
-              <Progress 
-                value={annotatorSpamScores[annotator.id] * 100} 
-                className={`h-2 ${annotatorSpamScores[annotator.id] > 0.3 ? "bg-red-500" : ""}`}
-              />
-            ) : (
-              <div className="h-2 w-full bg-muted rounded-full"></div>
-            )}
-          </div>
-        </TableCell>
-      </TableRow>
-    ))}
-  </TableBody>
-</Table>
-        ) : (
-          <div className="py-8 text-center">
-            <Users className="mx-auto h-8 w-8 text-muted-foreground" />
-            <p className="mt-4 text-sm text-muted-foreground">
-              No annotators assigned to this dataset
-            </p>
+          ) : (
+            <div className="py-4">
+              {Object.keys(annotatorSpamScores).length === 0 && (
+                <div className="rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-900/30 p-4 my-4">
+                  <div className="flex items-start">
+                    <Info className="h-5 w-5 text-amber-500 mr-3 mt-0.5" />
+                    <div>
+                      <h3 className="font-medium text-amber-800 dark:text-amber-500">
+                        Impossible to scan the annotators{' '}
+                      </h3>
+                      <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
+                        {scanErrorMessage}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
+              {scanningDataset &&
+              getDatasetAnnotators(scanningDataset).length > 0 ? (
+                // Modification du tableau dans le Dialog pour toujours afficher la colonne Spam Probability
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Annotator</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Is Spammer</TableHead>
+                      <TableHead>Spam Probability</TableHead>{' '}
+                      {/* Toujours afficher cette colonne */}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {getDatasetAnnotators(scanningDataset).map(annotator => (
+                      <TableRow key={annotator.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage
+                                src={`/placeholder.svg?height=32&width=32&text=${annotator.firstName.charAt(
+                                  0,
+                                )}${annotator.lastName.charAt(0)}`}
+                              />
+                              <AvatarFallback>
+                                {annotator.firstName.charAt(0)}
+                                {annotator.lastName.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium">
+                                {annotator.firstName} {annotator.lastName}
+                              </p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={annotator.active ? 'default' : 'secondary'}
+                          >
+                            {annotator.active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">{annotator.email}</div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              annotator.isSpammer ? 'destructive' : 'success'
+                            }
+                          >
+                            {annotator.isSpammer ? 'Yes' : 'No'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="w-full">
+                            <div className="flex justify-between mb-1">
+                              <span className="text-sm font-medium">
+                                {annotatorSpamScores[annotator.id]
+                                  ? (
+                                      annotatorSpamScores[annotator.id] * 100
+                                    ).toFixed(1) + '%'
+                                  : 'N/A'}
+                              </span>
+                            </div>
+                            {annotatorSpamScores[annotator.id] ? (
+                              <Progress
+                                value={annotatorSpamScores[annotator.id] * 100}
+                                className={`h-2 ${
+                                  annotatorSpamScores[annotator.id] > 0.3
+                                    ? 'bg-red-500'
+                                    : ''
+                                }`}
+                              />
+                            ) : (
+                              <div className="h-2 w-full bg-muted rounded-full"></div>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="py-8 text-center">
+                  <Users className="mx-auto h-8 w-8 text-muted-foreground" />
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    No annotators assigned to this dataset
+                  </p>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => {
+                      setShowAnnotatorScan(false);
+                      if (scanningDataset)
+                        handleAssignAnnotators(scanningDataset);
+                    }}
+                  >
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Assign Annotators
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
             <Button
               variant="outline"
-              size="sm"
-              className="mt-2"
-              onClick={() => {
-                setShowAnnotatorScan(false);
-                if (scanningDataset)
-                  handleAssignAnnotators(scanningDataset);
-              }}
+              onClick={() => setShowAnnotatorScan(false)}
             >
-              <UserPlus className="mr-2 h-4 w-4" />
-              Assign Annotators
+              Close
             </Button>
-          </div>
-        )}
-      </div>
-    )}
-
-    <DialogFooter>
-      <Button
-        variant="outline"
-        onClick={() => setShowAnnotatorScan(false)}
-      >
-        Close
-      </Button>
-      {/* {scanningDataset &&
+            {/* {scanningDataset &&
         getDatasetAnnotators(scanningDataset).length > 0 && (
           <Button
             onClick={() => {
@@ -1739,9 +1789,9 @@ const handleScanAnnotators = async (datasetId, e) => {
             Manage Annotators
           </Button>
         )} */}
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
