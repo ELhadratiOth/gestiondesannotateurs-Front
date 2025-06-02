@@ -21,6 +21,8 @@ import AdminDashboard from './components/pages/dashboard';
 import TrainPage from './components/pages/train';
 import AnnotatorTasks from './components/pages/annotator-tasks';
 import AnnotateCouples from './components/pages/annotator-annotate';
+import BlackList from "./components/pages/black-list";
+
 
 import NotFound from './components/pages/not-found';
 const ProtectedRoute = ({ children }) => {
@@ -79,6 +81,16 @@ function App() {
           }
         />
         <Route
+          path="/admin/blacklist"
+          element={
+            <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}>
+             <BlockOfCompos>
+               <BlackList />
+             </BlockOfCompos>
+           </ProtectedRoute>
+         }
+        />
+       <Route
           path="/profile"
           element={
             <ProtectedRoute>
@@ -186,6 +198,18 @@ function App() {
             </ProtectedRoute>
           }
         />
+         <Route
+          path="/blacklist"
+          element={
+            <ProtectedRoute>
+                <BlockOfCompos>
+
+              <BlackList />
+              </BlockOfCompos>
+
+            </ProtectedRoute>
+          }
+        />
         {/* Public routes */}
         <Route
           path="/auth"
@@ -251,6 +275,7 @@ function App() {
             )
           }
         />
+        
         {/* Default redirect */}
         <Route
           path="/"
