@@ -44,14 +44,12 @@ export default function AnnotatePage() {
           const datasetLabelName =
             firstItem?.datasetLabelName || 'Annotation Task';
 
-          // Parse label classes from semicolon-separated string
           const labelClassesString = firstItem?.datasetLabelClasses || '';
           const labelClasses = labelClassesString
             .split(';')
             .map(label => label.trim())
             .filter(label => label.length > 0);
 
-          // Transform the data to match our component structure
           const transformedData = {
             datasetName: datasetName,
             datasetLabelName: datasetLabelName,
@@ -65,13 +63,12 @@ export default function AnnotatePage() {
               annotationId: item.annotationId,
               textA: item.textA,
               textB: item.textB,
-              existingLabel: item.annotationLabel, // Can be null if not annotated yet
+              existingLabel: item.annotationLabel,
             })),
           };
 
           setAnnotationData(transformedData);
 
-          // Calculate initial annotations count
           const annotated = couplesOfText.filter(
             item => item.annotationLabel,
           ).length;
@@ -91,7 +88,6 @@ export default function AnnotatePage() {
     }
   }, [datasetId]);
 
-  // Auto-dismiss save messages
   useEffect(() => {
     if (saveMessage) {
       const timer = setTimeout(() => {
@@ -101,17 +97,14 @@ export default function AnnotatePage() {
     }
   }, [saveMessage]);
 
-  // Set existing label when moving to a new text pair
   useEffect(() => {
     if (annotationData && annotationData.textPairs[currentIndex]) {
       const currentPair = annotationData.textPairs[currentIndex];
       const existingLabel = currentPair.existingLabel || '';
       console.log(`Setting label for index ${currentIndex}:`, existingLabel);
-      // Always set the selected label to existing label (or empty string if no existing label)
       setSelectedLabel(existingLabel);
     }
   }, [currentIndex, annotationData]);
-  // Loading state
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -125,7 +118,6 @@ export default function AnnotatePage() {
       </div>
     );
   }
-  // Error state
   if (error) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -145,7 +137,6 @@ export default function AnnotatePage() {
     );
   }
 
-  // No data state
   if (!annotationData || annotationData.textPairs.length === 0) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -187,7 +178,6 @@ export default function AnnotatePage() {
     setSaveMessage(null);
 
     try {
-      // Prepare annotation request
       const annotationRequest = {
         coupletextId: currentTextPair.id,
         label: selectedLabel,
@@ -195,7 +185,6 @@ export default function AnnotatePage() {
 
       console.log('Saving annotation:', annotationRequest);
 
-      // Call the API to save annotation
       const response = await API.post(
         `/api/annotations/${datasetId}`,
         annotationRequest,
@@ -209,7 +198,6 @@ export default function AnnotatePage() {
           message: 'Annotation saved successfully!',
         });
 
-        // Update the current text pair's existing label in the state
         setAnnotationData(prevData => {
           const updatedData = { ...prevData };
           updatedData.textPairs = [...updatedData.textPairs];
@@ -220,17 +208,14 @@ export default function AnnotatePage() {
           return updatedData;
         });
 
-        // Update annotations count if this was a new annotation
         if (!wasAlreadyAnnotated) {
           setAnnotationsCount(prev => prev + 1);
         }
 
-        // Auto-advance after a short delay
         setTimeout(() => {
           if (currentIndex < totalPairs - 1) {
             setCurrentIndex(currentIndex + 1);
           } else {
-            // All annotations completed
             setSaveMessage({
               type: 'success',
               message: 'All annotations completed! Great work!',
@@ -277,8 +262,7 @@ export default function AnnotatePage() {
   };
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {' '}
-      {/* Save Message Notification */}
+
       {saveMessage && (
         <div
           className={`p-4 rounded-md border ${
@@ -368,7 +352,6 @@ export default function AnnotatePage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {' '}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {annotationData.labelClasses.map(label => (
               <Button

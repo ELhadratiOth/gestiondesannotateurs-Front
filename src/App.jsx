@@ -1,5 +1,6 @@
 import { Route, Routes, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import { Toaster } from '@/components/ui/sonner';
 import LoginPage from './components/pages/Login-page';
 import Space from './components/pages/space';
 import BlockOfCompos from './components/layouts/block-of-compos';
@@ -18,7 +19,7 @@ import CoupleOfTextPage from './components/pages/couple-of-text';
 import FooterDashboard from './components/footer-dashboard';
 import AdminDashboard from './components/pages/dashboard';
 import TrainPage from './components/pages/train';
-import AnnotatorTasks from "./components/pages/annotator-tasks";
+import AnnotatorTasks from './components/pages/annotator-tasks';
 import AnnotateCouples from './components/pages/annotator-annotate';
 
 import NotFound from './components/pages/not-found';
@@ -132,7 +133,7 @@ function App() {
           element={
             <ProtectedRoute>
               <BlockOfCompos>
-                <AnnotatorTasks/>
+                <AnnotatorTasks />
               </BlockOfCompos>
             </ProtectedRoute>
           }
@@ -277,8 +278,9 @@ function App() {
               </BlockOfCompos>
             </ProtectedRoute>
           }
-        />
+        />{' '}
       </Routes>
+      <Toaster />
     </>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail, User, Send } from 'lucide-react';
+import { toast } from 'sonner';
 import API from '../api';
 import {
   Card,
@@ -35,8 +36,10 @@ export default function ForgotPasswordPage() {
         username: formData.username,
         email: formData.email,
       });
-
       if (response.status === 200) {
+        toast.success(
+          'Password reset link sent successfully! Please check your email.',
+        );
         navigate('/auth/forgot-password/success');
       }
     } catch (error) {
@@ -47,17 +50,18 @@ export default function ForgotPasswordPage() {
         // Server responded with an error status
         const status = error.response.status;
         const message = error.response.data?.message || 'An error occurred';
-
         if (status === 404) {
-          alert('User not found. Please check your username and email.');
+          toast.error('User not found. Please check your username and email.');
         } else if (status === 400) {
-          alert('Invalid request. Please check your input and try again.');
+          toast.error(
+            'Invalid request. Please check your input and try again.',
+          );
         } else {
-          alert(`Error: ${message}`);
+          toast.error(`Error: ${message}`);
         }
       } else {
         // Network error or other issues
-        alert(
+        toast.error(
           'Failed to send reset email. Please check your internet connection and try again.',
         );
       }

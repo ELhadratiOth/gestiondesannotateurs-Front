@@ -67,7 +67,6 @@ const FooterDashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch global stats data (ajout)
         const statsResponse = await API.get('/api/stats');
         if (statsResponse.status === 200) {
           setStats(statsResponse.data.data);
@@ -83,19 +82,16 @@ const FooterDashboard = () => {
         ) {
           const statsData = annotatorStatsResponse.data.data;
 
-          // Récupérer tous les IDs d'annotateurs de min, median et max
           const minId = Object.keys(statsData.min)[0];
           const medianId = Object.keys(statsData.median)[0];
           const maxId = Object.keys(statsData.max)[0];
 
-          // Récupérer les noms des annotateurs
           const annotatorNamesResponse = await API.get('/api/annotators');
           const annotators = annotatorNamesResponse.data.data || [];
 
           console.log('Annotator Stats:', statsData);
           console.log('Annotators:', annotators);
 
-          // Fonction pour trouver le nom de l'annotateur par ID
           const findAnnotatorName = id => {
             const annotator = annotators.find(a => a.id == id);
             return annotator
@@ -121,20 +117,16 @@ const FooterDashboard = () => {
             },
           });
         }
-        // Fetch last annotator data
         const lastAnnotatorResponse = await API.get('/api/annotators/last');
 
-        // Fetch annotations count in last 24 hours
         const annotationsLast24hResponse = await API.get(
           '/api/annotations/count-last-24h',
         );
 
-        // Fetch last completed task
         const lastTaskResponse = await API.get(
           '/api/tasks/last-task-completed',
         );
 
-        // Fetch last completed dataset
         const lastDatasetResponse = await API.get(
           '/api/datasets/last-dataset-completed',
         );
@@ -147,7 +139,6 @@ const FooterDashboard = () => {
         console.log('Last completed dataset:', lastDatasetResponse.data);
         let activityData = [];
 
-        // Add last annotator activity - always show
         if (lastAnnotatorResponse.status === 200) {
           const lastAnnotator = lastAnnotatorResponse.data.data;
 
@@ -158,14 +149,12 @@ const FooterDashboard = () => {
             annotatorActive;
 
           if (lastAnnotator) {
-            // There is a last annotator
             annotatorMessage = `New annotator "${lastAnnotator.firstName} ${lastAnnotator.lastName}" joined the platform`;
             annotatorTime = 'Recently';
             annotatorUser = lastAnnotator.username;
             annotatorEmail = lastAnnotator.email;
             annotatorActive = lastAnnotator.active;
           } else {
-            // No annotators in the database
             annotatorMessage = 'No annotators have joined the platform yet';
             annotatorTime = 'Waiting';
             annotatorUser = 'System';
@@ -185,14 +174,12 @@ const FooterDashboard = () => {
           });
         }
 
-        // Add last completed task activity - always show
         if (lastTaskResponse.status === 200) {
           const lastTask = lastTaskResponse.data.data;
 
           let taskMessage, taskTime, taskUser;
 
           if (lastTask && lastTask.datasetName) {
-            // There is a completed task
             taskMessage = `Task completed on dataset "${lastTask.datasetName}"`;
             taskTime = lastTask.finishedAt
               ? new Date(lastTask.finishedAt).toLocaleDateString()
@@ -213,14 +200,12 @@ const FooterDashboard = () => {
           });
         }
 
-        // Add last completed dataset activity - always show
         if (lastDatasetResponse.status === 200) {
           const lastDataset = lastDatasetResponse.data.data;
 
           let datasetMessage, datasetTime, datasetUser;
 
           if (lastDataset && lastDataset.datasetName) {
-            // There is a completed dataset
             datasetMessage = `Dataset "${lastDataset.datasetName}" creation completed`;
             datasetTime = lastDataset.createdAt
               ? new Date(lastDataset.createdAt).toLocaleDateString()
@@ -247,16 +232,13 @@ const FooterDashboard = () => {
 
         setRecentActivity(activityData);
 
-        // Use real stats data if available
         let recentAnnotationsCount = 0;
         let pendingTasksCount = 0;
 
-        // Get real annotations count from last 24h endpoint
         if (annotationsLast24hResponse.status === 200) {
           recentAnnotationsCount = annotationsLast24hResponse.data.data || 0;
         }
 
-        // Get real pending tasks count from last completed task endpoint
         if (lastTaskResponse.status === 200 && lastTaskResponse.data.data) {
           pendingTasksCount = lastTaskResponse.data.data.nbrOfPendingTasks || 0;
         }
@@ -268,11 +250,16 @@ const FooterDashboard = () => {
             activeProjects: stats.nbrOfDatasets || 0,
             pendingTasks: pendingTasksCount,
           });
+          console.log('Quick Stats:', {
+            recentAnnotations: recentAnnotationsCount,
+            activeProjects: stats.nbrOfDatasets ,
+            pendingTasks: pendingTasksCount,
+          });
+
         } else {
-          // Fallback to mock data but use real annotations and pending tasks count
           setQuickStats({
             recentAnnotations: recentAnnotationsCount,
-            activeProjects: 8,
+            activeProjects: 0,
             pendingTasks: pendingTasksCount,
           });
         }
@@ -286,8 +273,7 @@ const FooterDashboard = () => {
           max: { id: '7', value: 8, name: 'Annotateur 7' },
         });
 
-        // Fallback to mock data on error
-        const mockActivity = [
+       const mockActivity = [
           {
             id: 1,
             type: 'annotation',
@@ -328,19 +314,16 @@ const FooterDashboard = () => {
   const getActivityIcon = (type, activity) => {
     switch (type) {
       case 'user':
-        // Show different icon based on whether there are annotators or not
         if (!activity?.hasData) {
           return <Clock className="h-4 w-4 text-gray-500" />;
         }
         return <Users className="h-4 w-4 text-green-600" />;
       case 'task':
-        // Show different icon based on whether there are completed tasks or not
         if (!activity?.hasData) {
           return <Clock className="h-4 w-4 text-gray-500" />;
         }
         return <FileText className="h-4 w-4 text-purple-600" />;
       case 'dataset':
-        // Show different icon based on whether there are processed datasets or not
         if (!activity?.hasData) {
           return <Clock className="h-4 w-4 text-gray-500" />;
         }
@@ -351,7 +334,6 @@ const FooterDashboard = () => {
   };
 
   const prepareChartData = () => {
-    // Extraire le prénom seulement pour l'affichage
     const getFirstName = fullName => {
       if (!fullName) return 'Aucun';
       return fullName.split(' ')[0];
@@ -362,7 +344,7 @@ const FooterDashboard = () => {
         name: getFirstName(annotatorStats.min.name),
         value: annotatorStats.min.value,
         id: annotatorStats.min.id,
-        fill: '#FDA4AF', // couleur rouge clair
+        fill: '#FDA4AF', 
       },
       {
         name: getFirstName(annotatorStats.median.name),

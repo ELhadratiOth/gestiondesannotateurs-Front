@@ -44,6 +44,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { toast } from 'sonner';
 import API from '../api';
 
 export default function AnnotatorsTable() {
@@ -78,19 +79,16 @@ export default function AnnotatorsTable() {
           setAnnotators(response.data.data || []);
         } else {
           throw new Error('Failed to fetch annotators');
-        }
-      } catch (error) {
+        }      } catch (error) {
         console.error('Error fetching annotators:', error);
-        // Show error notification if you have a notification system
-        // showNotification({ type: 'error', message: 'Failed to fetch annotators' })
+        toast.error('Failed to load annotators. Please refresh the page.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchAnnotators();
-  }, []);
-  // Toggle active status
+  }, []);  // Toggle active status
   const toggleActiveStatus = async id => {
     try {
       // Find the annotator to toggle
@@ -108,22 +106,29 @@ export default function AnnotatorsTable() {
             'Content-Type': 'application/json',
           },
         },
-      );
-
-      if (response.status === 200) {
+      );      if (response.status === 200) {
         // Update local state
         setAnnotators(
           annotators.map(a => (a.id === id ? { ...a, active: !a.active } : a)),
         );
+        
+        // Show success message
+        const annotatorName = annotator.firstName + ' ' + annotator.lastName;
+        const statusText = annotator.active ? 'deactivated' : 'activated';
+        toast.success(`${annotatorName} has been ${statusText} successfully`);
       } else {
         throw new Error('Failed to update annotator status');
-      }
-    } catch (error) {
+      }} catch (error) {
       console.error('Error toggling annotator status:', error);
-      // showNotification({ type: 'error', message: 'Failed to update annotator status' })
+      
+      // Handle 400 status code specifically for annotator assigned to dataset
+      if (error.response && error.response.status === 400) {
+        toast.error('Cannot deactivate this annotator because they are currently assigned to one or more datasets. Please unassign them from all datasets first.');
+      } else {
+        toast.error('Failed to update annotator status. Please try again.');
+      }
     }
-  };
-  // Handle annotator deletion
+  };  // Handle annotator deletion
   const handleDeleteAnnotator = async () => {
     if (!annotatorToDelete) return;
 
@@ -142,13 +147,19 @@ export default function AnnotatorsTable() {
         setAnnotators(
           annotators.filter(annotator => annotator.id !== annotatorToDelete),
         );
-        // showNotification({ type: 'success', message: 'Annotator deleted successfully' })
+        toast.success('Annotator deleted successfully');
       } else {
         throw new Error('Failed to delete annotator');
       }
     } catch (error) {
       console.error('Error deleting annotator:', error);
-      // showNotification({ type: 'error', message: 'Failed to delete annotator' })
+      
+      // Handle 400 status code specifically for annotator assigned to dataset
+      if (error.response && error.response.status === 400) {
+        toast.error('Cannot delete this annotator because they are currently assigned to one or more datasets. Please unassign them from all datasets first.');
+      } else {
+        toast.error('Failed to delete annotator. Please try again.');
+      }
     } finally {
       setAnnotatorToDelete(null);
     }

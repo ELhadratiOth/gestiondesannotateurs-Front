@@ -237,10 +237,9 @@ export function TasksTable() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>{getStatusBadge(task.status)}</TableCell>{' '}
+                  <TableCell>{getStatusBadge(task.status)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center gap-2 justify-end">
-                      {' '}
                       <Button
                         variant={
                           task.status === 'not-started'
@@ -251,7 +250,7 @@ export function TasksTable() {
                         }
                         size="sm"
                         onClick={() => handleAnnotateClick(task)}
-                        disabled={task.status === 'completed'}
+                        // disabled={task.status === 'completed'}
                         className="min-w-[80px]"
                       >
                         {task.action ||

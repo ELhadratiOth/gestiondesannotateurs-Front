@@ -287,7 +287,6 @@ export default function LabelsTable() {
                   </TableCell>
                   <TableCell className="text-right">
                     <AlertDialog>
-                      {' '}
                       <AlertDialogTrigger asChild>
                         <Button variant="ghost" size="sm">
                           <Trash2 className="h-4 w-4 text-red-500" />

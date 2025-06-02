@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +23,6 @@ import {
 } from '@/components/ui/table';
 import {
   Users,
-  RefreshCw,
   Search,
   Eye,
   ChevronRight,
@@ -40,7 +40,6 @@ const Teams = () => {
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [showTeamDetails, setShowTeamDetails] = useState(false);
 
-  // Fetch teams data from API (single call)
   const fetchTeams = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -110,62 +109,44 @@ const Teams = () => {
     setShowTeamDetails(true);
   };
   const handleContactMember = (email, name) => {
-    const subject = encodeURIComponent(
-      `Team Communication - Dataset: ${selectedTeam?.datasetName || 'Unknown'}`,
-    );
-    const body = encodeURIComponent(
-      `Hello ${name},\n\nI hope this email finds you well. I wanted to reach out regarding the annotation work on the "${
-        selectedTeam?.datasetName || 'Unknown'
-      }" dataset.\n\nBest regards`,
-    );
+    // Create email subject and body
+    const subject = `Regarding Annotation Project - Contact from Team Member`;
+    const body = `Hello ${name},\n\nI hope this message finds you well. I wanted to reach out regarding our annotation project.\n\nBest regards`;
 
-    // Create mailto URL
-    const mailtoUrl = `mailto:${email}?subject=${subject}&body=${body}`;
+    // Create Gmail URL with pre-filled subject and body
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+      email,
+    )}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-    // Method 1: Try direct window.location.href (most reliable for opening default email client)
-    try {
-      window.location.href = mailtoUrl;
-      return;
-    } catch {
-      // Continue to next method
-    }
+    // Copy email details to clipboard
+    const clipboardContent = `Email: ${email}\nSubject: ${subject}\nBody: ${body}`;
 
-    // Method 2: Try creating and clicking a temporary link
-    try {
-      const link = document.createElement('a');
-      link.href = mailtoUrl;
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      return;
-    } catch {
-      // Continue to next method
-    }
-
-    // Method 3: Try Gmail web interface in new tab
-    try {
-      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&subject=${subject}&body=${body}`;
-      window.open(gmailUrl, '_blank');
-      return;
-    } catch {
-      // Continue to fallback
-    }
-
-    // Fallback: Copy email to clipboard and show alert
     if (navigator.clipboard) {
       navigator.clipboard
-        .writeText(email)
+        .writeText(clipboardContent)
         .then(() => {
-          alert(
-            `Email client could not be opened automatically.\nEmail address "${email}" has been copied to your clipboard.\nPlease paste it into your email application.`,
+          // Open Gmail in new tab
+          window.open(gmailUrl, '_blank');
+
+          // Show success toast with toolkit information
+          toast.success(
+            `Email template copied to clipboard! Opening Gmail to contact ${name}. If Gmail doesn't open automatically, the email details are ready to paste.`,
+            { duration: 6000 },
           );
         })
         .catch(() => {
-          alert(`Please contact ${name} at: ${email}`);
+          // Fallback: just open Gmail and show basic info
+          window.open(gmailUrl, '_blank');
+          toast.info(`Opening Gmail to contact ${name} at: ${email}`, {
+            duration: 4000,
+          });
         });
     } else {
-      alert(`Please contact ${name} at: ${email}`);
+      // Fallback for browsers without clipboard support
+      window.open(gmailUrl, '_blank');
+      toast.info(`Opening Gmail to contact ${name} at: ${email}`, {
+        duration: 4000,
+      });
     }
   };
 
@@ -184,9 +165,9 @@ const Teams = () => {
               View teams organized by dataset assignments.
             </p>
           </div>
-        </div>
+        </div>{' '}
         <div className="flex items-center justify-center h-32">
-          <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
           <span className="ml-2 text-muted-foreground">Loading teams...</span>
         </div>
       </div>
@@ -216,12 +197,8 @@ const Teams = () => {
             className="pl-8"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-          />
+          />{' '}
         </div>
-        <Button variant="outline" onClick={fetchTeams}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
       </div>
 
       {/* Teams Grid */}
@@ -275,7 +252,6 @@ const Teams = () => {
               </CardHeader>
 
               <CardContent className="space-y-4">
-
                 {/* Progress Section */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">

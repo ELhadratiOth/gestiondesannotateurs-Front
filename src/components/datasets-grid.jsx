@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   Card,
   CardContent,
@@ -23,13 +24,13 @@ import {
   UserMinus,
   Users,
   Scan,
-  RefreshCw,
   Calendar,
   FileText,
   LayoutGrid,
   Info,
   MoreHorizontal,
   Eye,
+  RefreshCw,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -83,6 +84,7 @@ export default function DatasetsGrid() {
   const [isDisaffecting, setIsDisaffecting] = useState(false);
   const [detailDataset, setDetailDataset] = useState(null);
   const [showAnnotatorScan, setShowAnnotatorScan] = useState(false);
+  const [showAddDatasetDialog, setShowAddDatasetDialog] = useState(false);
   const [scanningDataset, setScanningDataset] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
   const [annotators, setAnnotators] = useState([]);
@@ -111,11 +113,11 @@ export default function DatasetsGrid() {
       const result = response.data.data;
 
       const datasetsArray = Array.isArray(result) ? result : [];
-
       const datasetsWithAnnotators = datasetsArray.map(dataset => ({
         ...dataset,
         datasetId: dataset.datasetId,
-        datasetSize: dataset.datasetSize || 0,
+        datasetSizeMB: dataset.datsetSizeMB || 0, 
+        datasetRecordCount: dataset.datsetSize || 0, 
         datasetName: dataset.datasetName || 'Unnamed Dataset',
         datasetAdvancement: dataset.datasetAdvancement || 0,
         datasetDescription: dataset.datasetDescription || '',
@@ -259,22 +261,16 @@ export default function DatasetsGrid() {
   const refreshDatasets = useCallback(() => {
     fetchDatasetsCallback();
   }, [fetchDatasetsCallback]);
-
-  const refreshLabels = useCallback(() => {
-    fetchLabelsCallback();
-  }, [fetchLabelsCallback]);
-
   const refreshAnnotators = useCallback(() => {
     fetchAnnotatorsCallback();
   }, [fetchAnnotatorsCallback]);
 
-  // Add a general refresh function to refresh all data
+  // Add a comprehensive refresh function that refreshes all data
   const refreshAllData = useCallback(() => {
-    refreshDatasets();
-    refreshLabels();
-    refreshAnnotators();
-  }, [refreshDatasets, refreshLabels, refreshAnnotators]);
-
+    fetchDatasetsCallback();
+    fetchAnnotatorsCallback();
+    fetchLabelsCallback();
+  }, [fetchDatasetsCallback, fetchAnnotatorsCallback, fetchLabelsCallback]);
   const filteredDatasets = datasets.filter(dataset => {
     if (!dataset) return false;
     const name = (dataset.datasetName || '').toLowerCase();
@@ -390,11 +386,9 @@ export default function DatasetsGrid() {
   };
   // Handle save annotators
   const handleSaveAnnotators = async () => {
-    if (!selectedDataset) return;
-
-    // Check if at least 3 annotators are selected
+    if (!selectedDataset) return; // Check if at least 3 annotators are selected
     if (selectedAnnotators.length < 3) {
-      alert('Please select at least 3 annotators before assigning.');
+      toast.error('Please select at least 3 annotators before assigning.');
       return;
     }
 
@@ -425,9 +419,7 @@ export default function DatasetsGrid() {
           email: annotator.email || '',
           active: annotator.active !== undefined ? annotator.active : true,
           role: annotator.role || 'Annotator',
-        }));
-
-      // Update local state
+        })); // Update local state
       setDatasets(
         datasets.map(dataset =>
           dataset.datasetId === selectedDataset
@@ -437,28 +429,41 @@ export default function DatasetsGrid() {
       );
       setSelectedDataset(null);
 
+      // Show success message
+      toast.success(
+        `Successfully assigned ${selectedAnnotators.length} annotators to the dataset.`,
+      );
+
       // Refresh data after assigning annotators
       refreshDatasets();
       refreshAnnotators();
     } catch (error) {
       console.error('Error assigning annotators:', error);
+
+      // Handle specific error messages from the API
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.erreurs
+      ) {
+        // Display each error message from the erreurs array
+        error.response.data.erreurs.forEach(errorMessage => {
+          toast.error(errorMessage);
+        });
+      } else if (error.response && error.response.status === 400) {
+        toast.error(
+          'Failed to assign annotators. Please check your selection and try again.',
+        );
+      } else {
+        toast.error('Failed to assign annotators. Please try again.');
+      }
     } finally {
       setIsAssigning(false);
     }
   };
 
-  // Handle disaffect all annotators
   const handleDisaffectAllAnnotators = async (datasetId, e) => {
     if (e) e.stopPropagation();
-
-    if (
-      !confirm(
-        'Are you sure you want to remove all annotators from this dataset?',
-      )
-    ) {
-      return;
-    }
-
     setIsDisaffecting(true);
     try {
       await API.delete(`/api/tasks/dataset/${datasetId}`);
@@ -472,16 +477,16 @@ export default function DatasetsGrid() {
             ? { ...dataset, annotators: [], assigned: false }
             : dataset,
         ),
-      );
-
-      // Refresh data after disaffecting annotators
+      ); // Refresh data after disaffecting annotators
       refreshDatasets();
       refreshAnnotators();
 
-      alert('All annotators have been successfully removed from the dataset.');
+      toast.success(
+        'All annotators have been successfully removed from the dataset.',
+      );
     } catch (error) {
       console.error('Error removing annotators:', error);
-      alert('Failed to remove annotators. Please try again.');
+      toast.error('Failed to remove annotators. Please try again.');
     } finally {
       setIsDisaffecting(false);
     }
@@ -584,13 +589,13 @@ export default function DatasetsGrid() {
     if (!dataset) return null;
 
     console.log('Detail dataset:', dataset);
-
     return {
       datasetId: dataset.datasetId,
       datasetName: dataset.datasetName || 'Unnamed Dataset',
       datasetDescription: dataset.datasetDescription || '',
       datasetLabel: dataset.datasetLabel || 'No Label',
-      datasetSize: dataset.datasetSize || 0,
+      datasetSizeMB: dataset.datasetSizeMB || 0, 
+      datasetRecordCount: dataset.datasetSize || 0,
       datasetAdvancement: dataset.datasetAdvancement || 0,
       datasetCreatedAt: dataset.datasetCreatedAt || new Date().toISOString(),
       annotators: dataset.annotators || [],
@@ -640,10 +645,9 @@ export default function DatasetsGrid() {
         createdDataset = response.data.data;
       }
       console.log('Created dataset:', createdDataset);
-
       const newDataset = {
         datasetId: createdDataset?.datasetId || Date.now(),
-        datasetSize: createdDataset?.datasetSizeMB || sizeMB,
+        datasetSize: createdDataset?.datsetSizeMB || sizeMB,
         datasetName: createdDataset?.datasetName || name,
         datasetDescription: createdDataset?.description || description,
         datasetLabel:
@@ -653,32 +657,40 @@ export default function DatasetsGrid() {
         datasetAdvancement: createdDataset?.datasetAdvancement || 0,
         datasetCreatedAt:
           createdDataset?.datasetCreatedAt || new Date().toISOString(),
-        datasetSizeMB: createdDataset?.datasetSize || 0,
         datasetAssignedAt:
           createdDataset?.assignedAt || new Date().toISOString(),
         annotators: [],
       };
 
       setDatasets([newDataset, ...datasets]);
-
       setTimeout(() => {
         refreshDatasets();
       }, 1000);
 
-      document
-        .querySelector('[data-state="open"] button[type="button"]')
-        .click();
+      // Close the dialog
+      setShowAddDatasetDialog(false);
     } catch (error) {
       console.error('Error creating dataset:', error);
-      alert('Failed to create dataset. Please try again.');
+      toast.error('Failed to create dataset. Please try again.');
     } finally {
       setIsCreating(false);
     }
   };
-
   const formatFileSize = sizeInMB => {
     if (!sizeInMB) return 'Unknown size';
-    return `${sizeInMB} MB`;
+
+    // Handle scientific notation
+    const size = parseFloat(sizeInMB);
+    if (isNaN(size)) return 'Unknown size';
+
+    // Format with appropriate precision
+    if (size < 0.01) {
+      return `${(size * 1000).toFixed(2)} KB`;
+    } else if (size < 1) {
+      return `${size.toFixed(3)} MB`;
+    } else {
+      return `${size.toFixed(2)} MB`;
+    }
   };
   const handleDownloadDataset = async datasetId => {
     if (!datasetId) return;
@@ -710,13 +722,12 @@ export default function DatasetsGrid() {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Error downloading dataset:', err);
-
       if (err.response && err.response.status === 404) {
-        alert(
+        toast.error(
           'Dataset cannot be downloaded. The annotation is not yet complete. Please ensure all text pairs are annotated before downloading.',
         );
       } else {
-        alert('Error downloading dataset. Please try again.');
+        toast.error('Error downloading dataset. Please try again.');
       }
     } finally {
       setIsDownloading(false);
@@ -734,110 +745,26 @@ export default function DatasetsGrid() {
             className="pl-8"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-          />
-        </div>
+          />{' '}
+        </div>{' '}
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            size="icon"
             onClick={refreshAllData}
             disabled={isLoading}
-            title="Refresh Data"
           >
             <RefreshCw
-              className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
+              className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`}
             />
+            Refresh
           </Button>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-1">
-                <Plus className="h-4 w-4" />
-                <span>Add Dataset</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogHeader>
-                <DialogTitle>Add New Dataset</DialogTitle>
-                <DialogDescription>
-                  Upload a file and provide information to create a new dataset.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleAddDataset}>
-                <div className="grid gap-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Dataset Name</Label>
-                    <div className="relative">
-                      <Database className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="name"
-                        name="name"
-                        placeholder="Enter dataset name"
-                        className="pl-9"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      name="description"
-                      placeholder="Enter a description of your dataset"
-                      rows={3}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="labelId">Label</Label>
-                    <Select defaultValue="1" name="labelId">
-                      <SelectTrigger id="labelId">
-                        <SelectValue placeholder="Select label" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {labelsData.map(label => (
-                          <SelectItem
-                            key={label.id}
-                            value={label.id.toString()}
-                          >
-                            {label.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="file">Upload Dataset File</Label>
-                    <div className="grid gap-2">
-                      <Input
-                        id="file"
-                        name="file"
-                        type="file"
-                        accept=".csv,.json"
-                        required
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Supported formats: CSV, JSON, JSONL, XML, XLSX. Maximum
-                        file size: 100MB.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button type="button" variant="outline">
-                      Cancel
-                    </Button>
-                  </DialogClose>
-                  <Button type="submit" disabled={isCreating}>
-                    {isCreating ? 'Creating...' : 'Create Dataset'}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <Button
+            className="flex items-center gap-1"
+            onClick={() => setShowAddDatasetDialog(true)}
+          >
+            <Plus className="h-4 w-4" />
+            <span>Add Dataset</span>
+          </Button>
         </div>
       </div>
       {isLoading ? (
@@ -854,15 +781,13 @@ export default function DatasetsGrid() {
               ? 'Try a different search term'
               : 'Get started by creating your first dataset'}
           </p>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="mt-4">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Dataset
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]"></DialogContent>
-          </Dialog>
+          <Button
+            className="mt-4"
+            onClick={() => setShowAddDatasetDialog(true)}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Dataset
+          </Button>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -955,18 +880,13 @@ export default function DatasetsGrid() {
                         <Download className="mr-2 h-4 w-4" />
                         {isDownloading ? 'Downloading...' : 'Download'}
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator />
+                      <DropdownMenuSeparator />{' '}
                       <DropdownMenuItem
                         className="text-destructive"
                         onClick={e => {
                           e.stopPropagation();
-                          if (
-                            confirm(
-                              `Are you sure you want to delete "${dataset.datasetName}"?`,
-                            )
-                          ) {
-                            handleDeleteDataset(dataset.datasetId);
-                          }
+                          // For now, we'll proceed directly but could implement a proper dialog later
+                          handleDeleteDataset(dataset.datasetId);
                         }}
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
@@ -975,8 +895,7 @@ export default function DatasetsGrid() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-              </CardHeader>
-
+              </CardHeader>{' '}
               <CardContent className="pb-2">
                 <p className="text-sm text-muted-foreground line-clamp-2">
                   {dataset.datasetDescription}
@@ -990,6 +909,12 @@ export default function DatasetsGrid() {
                     value={dataset.datasetAdvancement}
                     className="h-2"
                   />
+                </div>
+                <div className="mt-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Records</span>
+                    <span>{dataset.datasetSize} text pairs</span>
+                  </div>
                 </div>
                 {dataset.annotators && dataset.annotators.length > 0 && (
                   <div className="mt-3 ">
@@ -1022,15 +947,14 @@ export default function DatasetsGrid() {
                     </div>
                   </div>
                 )}
-              </CardContent>
-
+              </CardContent>{' '}
               <CardFooter className="flex items-center justify-between pt-2">
                 <div className="text-sm text-muted-foreground">
                   Created:
                   {new Date(dataset.datasetCreatedAt).toLocaleDateString()}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {formatFileSize(dataset.datasetSize)}
+                  {formatFileSize(dataset.datasetSizeMB)}
                 </div>
               </CardFooter>
             </Card>
@@ -1057,8 +981,7 @@ export default function DatasetsGrid() {
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="annotators">Annotators</TabsTrigger>
               <TabsTrigger value="stats">Statistics</TabsTrigger>
-            </TabsList>
-
+            </TabsList>{' '}
             <TabsContent value="overview" className="space-y-4 pt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
@@ -1076,11 +999,24 @@ export default function DatasetsGrid() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Size</Label>
+                  <Label className="text-xs text-muted-foreground">
+                    File Size
+                  </Label>
                   <div className="flex items-center gap-2">
                     <Database className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">
-                      {formatFileSize(getDetailDataset()?.datasetSize)}
+                      {formatFileSize(getDetailDataset()?.datasetSizeMB)}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">
+                    Records
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">
+                      {getDetailDataset()?.datasetRecordCount} text pairs
                     </span>
                   </div>
                 </div>
@@ -1129,7 +1065,6 @@ export default function DatasetsGrid() {
                 </div>
               </div>
             </TabsContent>
-
             <TabsContent value="annotators" className="space-y-4 pt-4">
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-medium">
@@ -1218,7 +1153,6 @@ export default function DatasetsGrid() {
                 </div>
               </div>
             </TabsContent>
-
             <TabsContent value="stats" className="space-y-4 pt-4">
               <div className="grid grid-cols-2 gap-4">
                 <Card>
@@ -1314,15 +1248,8 @@ export default function DatasetsGrid() {
                 size="sm"
                 className="gap-1"
                 onClick={() => {
-                  if (
-                    confirm(
-                      `Are you sure you want to delete "${
-                        getDetailDataset()?.datasetName
-                      }"?`,
-                    )
-                  ) {
-                    handleDeleteDataset(detailDataset);
-                  }
+                  // For now, we'll proceed directly but could implement a proper dialog later
+                  handleDeleteDataset(detailDataset);
                 }}
                 disabled={isDeleting}
               >
@@ -1788,8 +1715,95 @@ export default function DatasetsGrid() {
             <UserPlus className="mr-2 h-4 w-4" />
             Manage Annotators
           </Button>
-        )} */}
+        )} */}{' '}
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Dataset Dialog - Shared for both header and empty state */}
+      <Dialog
+        open={showAddDatasetDialog}
+        onOpenChange={setShowAddDatasetDialog}
+      >
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Add New Dataset</DialogTitle>
+            <DialogDescription>
+              Upload a file and provide information to create a new dataset.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleAddDataset}>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="dataset-name">Dataset Name</Label>
+                <div className="relative">
+                  <Database className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="dataset-name"
+                    name="name"
+                    placeholder="Enter dataset name"
+                    className="pl-9"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dataset-description">Description</Label>
+                <Textarea
+                  id="dataset-description"
+                  name="description"
+                  placeholder="Enter a description of your dataset"
+                  rows={3}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dataset-label">Label</Label>
+                <Select defaultValue="1" name="labelId">
+                  <SelectTrigger id="dataset-label">
+                    <SelectValue placeholder="Select label" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {labelsData.map(label => (
+                      <SelectItem key={label.id} value={label.id.toString()}>
+                        {label.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dataset-file">Upload Dataset File</Label>
+                <div className="grid gap-2">
+                  <Input
+                    id="dataset-file"
+                    name="file"
+                    type="file"
+                    accept=".csv,.json"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Supported formats: CSV, JSON, XLSX. file size: 10MB.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowAddDatasetDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isCreating}>
+                {isCreating ? 'Creating...' : 'Create Dataset'}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

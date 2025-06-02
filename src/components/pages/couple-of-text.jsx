@@ -71,7 +71,7 @@ export default function CoupleOfTextPage() {
           </div>
           <p className="text-muted-foreground mt-2">
             Visualize all pairs of text and their labels in this dataset
-          </p>{' '}
+          </p>
         </div>
 
         {/* Table Component */}

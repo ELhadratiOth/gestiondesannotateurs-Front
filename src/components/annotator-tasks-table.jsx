@@ -130,17 +130,14 @@ export function AnnotatorTasksTable() {
     return matchesSearch && matchesStatusFilter;
   });
 
-  // Navigate to annotation page
   const handleAnnotateClick = (task) => {
     const annotatorId = getAnnotatorId();
     navigate(`/annotate/${annotatorId}/${task.taskId}`);
   };
 
-  // Handle action button click
   const handleActionClick = (task) => {
-    if (task.action === 'Start' || task.action === 'Continue') {
       handleAnnotateClick(task);
-    }
+    
   };
 
   if (loading) {
@@ -237,7 +234,7 @@ export function AnnotatorTasksTable() {
                     </div>
                   </TableCell>
                   <TableCell className="text-center">
-                    <Badge variant="outline">{task.totalAssigned}</Badge>
+                    <Badge variant="outline">{task.totalAssigned + 5}</Badge>
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge className={getStatusColor(task.status)}>
@@ -252,28 +249,13 @@ export function AnnotatorTasksTable() {
                           size="sm"
                           onClick={() => handleActionClick(task)}
                           className="bg-primary hover:bg-primary/90"
+                          
                         >
                           <BookOpen className="h-4 w-4 mr-1" />
-                          {task.action}
+                          {task.action} 
                         </Button>
                       )}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleAnnotateClick(task)}>
-                            <BookOpen className="h-4 w-4 mr-2" />
-                            Annotate
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                    
                     </div>
                   </TableCell>
                 </TableRow>

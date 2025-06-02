@@ -201,7 +201,7 @@ export default function CoupleOfTextTable({ datasetId }) {
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
-        </div>{' '}
+        </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -219,7 +219,7 @@ export default function CoupleOfTextTable({ datasetId }) {
             {exportLoading ? 'Exporting...' : 'Export'}
           </Button>
         </div>
-      </div>{' '}
+      </div>
       {/* Info sur le dataset */}
       {datasetInfo && (
         <div className="bg-muted/40 rounded-lg p-4 flex items-center gap-3">
