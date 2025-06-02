@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import {
   Check,
   Target,
@@ -9,28 +10,34 @@ import {
   AlertTriangle,
   ListTodo,
   Users,
-  Activity
+  Activity,
+  TrendingUp,
+  BarChart3,
+  Database,
+  Clock,
+  ArrowRight
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import API from '../../api';
 import { useAuth } from '@/context/AuthContext';
 
-function StatCard({ title, value, description, icon, progress }) {
+function StatCard({ title, value, description, icon, color = "blue", bgColor = "bg-blue-500" }) {
   return (
-    <Card className="bg-gradient-to-br from-background to-muted shadow-xl rounded-2xl backdrop-blur-sm border border-border transition-all hover:scale-[1.01]">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-md font-semibold text-foreground/90">{title}</CardTitle>
-        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-lg">
+    <Card className="border shadow-sm hover:shadow-md transition-shadow duration-200">
+      <CardContent className="p-6 text-center">
+        <div className={`${bgColor} w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4`}>
           {icon}
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-4xl font-extrabold text-primary">{value}</div>
-        {progress !== undefined && (
-          <Progress value={progress} className="mt-3 h-2 bg-muted-foreground/10" />
-        )}
+        <div className={`text-3xl font-bold text-${color}-600 dark:text-${color}-400 mb-2`}>
+          {value}
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {title}
+        </p>
         {description && (
-          <p className="text-sm text-muted-foreground mt-2">{description}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {description}
+          </p>
         )}
       </CardContent>
     </Card>
@@ -39,22 +46,28 @@ function StatCard({ title, value, description, icon, progress }) {
 
 function DashboardCard({ title, icon, items = [] }) {
   return (
-    <Card className="bg-background/80 backdrop-blur-md border shadow-lg rounded-xl hover:ring-2 ring-ring transition-all">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-lg font-semibold text-foreground">{title}</CardTitle>
-        <div className="h-9 w-9 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-white flex items-center justify-center shadow-md">
+    <Card className="shadow-sm hover:shadow-md transition-all duration-200">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+        <div className="h-9 w-9 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white flex items-center justify-center">
           {icon}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-3">
         {items.length === 0 ? (
           <p className="text-muted-foreground text-sm">No items to display</p>
         ) : (
-          <ul className="mt-2 space-y-2 text-sm text-foreground/90">
+          <div className="space-y-2">
             {items.map((item, i) => (
-              <li key={i} className="rounded-lg px-3 py-1 bg-muted/30 hover:bg-muted transition">{item}</li>
+              <div
+                key={i}
+                className="flex items-center space-x-2 p-2 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+              >
+                <Activity className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">{item}</span>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </CardContent>
     </Card>
@@ -81,118 +94,155 @@ export default function Space() {
   const [error, setError] = useState(null);
 
   const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    return "Welcome back,";
   };
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchStats = async () => {
       try {
         setLoading(true);
         const annotatorId = localStorage.getItem('annotatorId') || user?.id;
         if (!annotatorId) throw new Error('No annotator ID found');
+        
         const response = await API.get('/api/dashboard/annotator-stats', {
           headers: { 'X-Annotator-ID': annotatorId }
         });
 
+        if (!isMounted) return;
+
         if (response.data?.status === 'success') {
-          const data = response.data.data;
-          setStats({
-            firstName: data.firstName || '',
-            lastName: data.lastName || '',
-            tasksCompleted: data.tasksCompleted || 0,
-            totalTasks: data.totalTasks || 0,
-            accuracyRate: data.accuracyRate || 0,
-            dailyStreak: data.dailyStreak || 0,
-            todayGoal: data.todayGoal || 0,
-            isSpammer: data.spammer || false,
-            recentAnnotations: data.recentAnnotations || [],
-            activeProjects: data.activeProjects || [],
-            teamActivity: data.teamActivity || [],
-            daysSinceCreation: data.daysSinceCreation || 0
-          });
-
-                            console.log('Fetched stats:', data);
-
+          setStats(response.data.data);
         } else {
           throw new Error(response.data?.message || 'Failed to fetch stats');
         }
-      } catch (error) {
-        setError(error.message);
+      } catch (err) {
+        if (isMounted) {
+          setError(err.message);
+          console.error('Dashboard error:', err);
+        }
       } finally {
-
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
-    if (user) fetchStats();
+    if (user) {
+      fetchStats();
+    }
+
+    return () => {
+      isMounted = false;
+    };
   }, [user]);
 
-  if (!user) return <div className="p-6 text-center text-lg text-muted-foreground">Please log in to view the dashboard</div>;
-  if (loading) return <div className="p-6 text-center text-xl animate-pulse text-muted-foreground">Loading dashboard...</div>;
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-[80vh]">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Authentication Required</CardTitle>
+            <CardDescription>
+              Please sign in to access your personalized dashboard
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6 p-8 animate-pulse">
+        <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-8 space-y-8 bg-gradient-to-b from-background via-muted to-background min-h-screen">
+    <div className="space-y-8 p-8">
+      <div className="space-y-2">
+        <h1 className="text-4xl font-extrabold tracking-tight">
+          {getGreeting()} <span className="text-primary">{stats.firstName}</span>
+        </h1>
+        <p className="text-lg text-muted-foreground">
+          Here's your personal dashboard overview
+        </p>
+      </div>
+
       {error && (
         <Alert variant="destructive">
-          <AlertTriangle className="h-5 w-5" />
+          <AlertTriangle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <div className="space-y-1">
-        <h2 className="text-4xl font-extrabold tracking-tight text-foreground">
-          {getGreeting()}, <span className="capitalize">{stats.firstName} {stats.lastName}!</span>
-        </h2>
-        <p className="text-lg text-muted-foreground">Welcome back! Ready to make an impact today?</p>
-      </div>
-
       {stats.isSpammer && (
         <Alert variant="destructive">
-          <AlertTriangle className="h-5 w-5" />
+          <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Your account has been flagged for suspicious activity. Please review annotation guidelines.
+            Your account has been flagged for suspicious activity. Please review guidelines.
           </AlertDescription>
         </Alert>
       )}
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-4">
         <StatCard
           title="Tasks Completed"
           value={`${stats.tasksCompleted}/${stats.totalTasks}`}
-          icon={<Check className="h-5 w-5" />}
-          progress={stats.totalTasks > 0 ? Math.round((stats.tasksCompleted / stats.totalTasks) * 100) : 0}
+          icon={<Check className="h-6 w-6 text-white" />}
+          color="blue"
+          bgColor="bg-blue-500"
         />
         <StatCard
-          title="Days Registered"
-          value={`${stats.daysSinceCreation}`}
-          description={
-            stats.daysSinceCreation < 5
-              ? 'New annotator, keep learning!'
-              : 'Experienced annotator, great job!'
-          }
-          icon={<Target className="h-5 w-5" />}
+          title="Days Active"
+          value={stats.daysSinceCreation}
+          description={stats.daysSinceCreation < 5 ? 'New annotator' : 'Experienced'}
+          icon={<Target className="h-6 w-6 text-white" />}
+          color="green"
+          bgColor="bg-green-500"
         />
         <StatCard
           title="Daily Streak"
-          value={`${stats.dailyStreak} days`}
-          description={stats.dailyStreak > 3 ? '🔥 Keep it going!' : 'Let’s start a streak!'}
-          icon={<Calendar className="h-5 w-5" />}
+          value={`${stats.dailyStreak}`}
+          description={stats.dailyStreak > 3 ? '🔥 On fire!' : 'Keep going!'}
+          icon={<Calendar className="h-6 w-6 text-white" />}
+          color="purple"
+          bgColor="bg-purple-500"
         />
         <StatCard
-          title="Today’s Goal"
-          value={`${stats.todayGoal}`}
-          description="Tasks remaining for today"
-          icon={<ClipboardList className="h-5 w-5" />}
+          title="Today's Goal"
+          value={stats.todayGoal}
+          description="Tasks remaining"
+          icon={<ClipboardList className="h-6 w-6 text-white" />}
+          color="orange"
+          bgColor="bg-orange-500"
         />
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        <DashboardCard title="Recent Annotations" icon={<ListTodo className="h-5 w-5" />} items={stats.recentAnnotations} />
-        <DashboardCard title="Active Projects" icon={<Users className="h-5 w-5" />} items={stats.activeProjects} />
-        <DashboardCard title="Team Activity" icon={<Activity className="h-5 w-5" />} items={stats.teamActivity} />
+        <DashboardCard
+          title="Recent Annotations"
+          icon={<ListTodo className="h-5 w-5" />}
+          items={stats.recentAnnotations}
+        />
+        <DashboardCard
+          title="Active Projects"
+          icon={<Database className="h-5 w-5" />}
+          items={stats.activeProjects}
+        />
+        <DashboardCard
+          title="Team Activity"
+          icon={<Users className="h-5 w-5" />}
+          items={stats.teamActivity}
+        />
       </div>
     </div>
   );
