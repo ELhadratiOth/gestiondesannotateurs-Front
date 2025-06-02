@@ -13,9 +13,9 @@ export function redirectToUnauthorizedRoute() {
   const currentPath = window.location.pathname;
 
   if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
-    window.location.href = '/dashboard';
+    // window.location.href = '/dashboard';
   } else if (role === 'ANNOTATOR') {
-    window.location.href = '/space';
+    // window.location.href = '/space';
   } else if (!role && currentPath !== '/') {
     window.location.href = '/';
   }
