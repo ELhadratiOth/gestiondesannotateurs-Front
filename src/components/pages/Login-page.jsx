@@ -1,23 +1,44 @@
 import LoginCard from '../login-card';
 
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { SignupCard } from '../signup-card';
 import { ThemeToggle } from '../ui/theme-toggle';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CheckCircle } from 'lucide-react';
+import { AnimatedTitle } from '../ui/animated-title';
 
 export default function LoginPage() {
   const [activeView, setActiveView] = useState('signup');
+  const location = useLocation();
+  const [successMessage, setSuccessMessage] = useState('');
+
+  useEffect(() => {
+    // Check if there's a success message from navigation state (e.g., from signup)
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+      setActiveView('login'); // Switch to login view when coming from signup
+
+      // Clear the message after 5 seconds
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [location.state]);
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="flex h-16 items-center justify-between border-b px-4 md:px-6">
-        <Link to={'/'} className="flex items-center gap-2 font-semibold">
-          <span className="h-8 w-8 rounded-md bg-primary text-center text-lg font-bold leading-8 text-primary-foreground">
-            A
-          </span>
-          <span>Annotation Manager</span>
-        </Link>
-        <ThemeToggle variant="dropdown" />
+      <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background px-4 md:px-10 w-full">
+        <div className="flex items-center gap-4">
+          <Link to={'/'}>
+            <AnimatedTitle />
+          </Link>
+        </div>
+        <div className="flex items-center gap-2">
+          <ThemeToggle variant="dropdown" className />
+        </div>
       </header>
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
         <div className="mx-auto grid w-full max-w-[900px] gap-6 md:grid-cols-2">
@@ -30,8 +51,14 @@ export default function LoginPage() {
                 {activeView === 'login'
                   ? 'Sign in to your account to continue'
                   : 'Create an account to get started'}
-              </p>
+              </p>{' '}
             </div>
+            {successMessage && (
+              <Alert className="mb-4">
+                <CheckCircle className="h-4 w-4" />
+                <AlertDescription>{successMessage}</AlertDescription>
+              </Alert>
+            )}
             <div className="flex flex-col gap-2 min-h-[300px] md:min-h-0">
               {activeView === 'login' ? (
                 <LoginCard onViewChange={() => setActiveView('signup')} />

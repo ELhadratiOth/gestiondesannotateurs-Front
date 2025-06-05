@@ -234,7 +234,7 @@ export function AnnotatorTasksTable() {
                     </div>
                   </TableCell>
                   <TableCell className="text-center">
-                    <Badge variant="outline">{task.totalAssigned + 5}</Badge>
+                    <Badge variant="outline">{task.totalAssigned}</Badge>
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge className={getStatusColor(task.status)}>

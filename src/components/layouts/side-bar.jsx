@@ -95,7 +95,7 @@ export function AppSidebar({ userInfo }) {
       roles: ['SUPER_ADMIN', 'ADMIN'],
     },
     {
-     icon: <ShieldAlert className="h-5 w-5" />, // ou <Ban className="h-5 w-5" />
+     icon: <ShieldAlert className="h-5 w-5" />, 
      title: 'Blacklist',
      id: 'blacklist',
      href: '/blacklist',
@@ -103,7 +103,7 @@ export function AppSidebar({ userInfo }) {
     },
     {
       icon: <Brain className="h-5 w-5" />,
-      title: 'Train',
+      title: 'Models',
       id: 'train',
       href: '/train',
       roles: ['SUPER_ADMIN', 'ADMIN'],

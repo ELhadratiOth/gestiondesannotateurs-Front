@@ -42,19 +42,12 @@ export function SignupCard({ onViewChange }) {
 
     try {
       const result = await signup(formData);
-
       if (result.success) {
-        // User is now in the context
-        const user = result.user;
-        console.log('User:', user);
-
-        if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') {
-          navigate('/dashboard');
-        } else if (user.role === 'ANNOTATOR') {
-          navigate('/space');
-        } else {
-          setError('Account type not recognized');
-        }
+        navigate('/auth', {
+          state: { message: 'Account created successfully! Please log in.' },
+        });
+      } else if (result.error === 'User already exists') {
+        setError('Username already exists. Please choose a different one.');
       } else {
         setError(result.error || 'Failed to create account. Please try again.');
       }

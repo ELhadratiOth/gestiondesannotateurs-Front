@@ -1,10 +1,8 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import API from '../api';
 
-// Create the context
 const AuthContext = createContext();
 
-// Custom hook to use the auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -13,7 +11,6 @@ export const useAuth = () => {
   return context;
 };
 
-// Provider component
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -24,17 +21,12 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          // You can implement an API call to validate the token and get user data
-          // For now, we'll try to get the user profile from localStorage if available
           const userFromStorage = localStorage.getItem('user');
           if (userFromStorage) {
             setUser(JSON.parse(userFromStorage));
           } else {
-            // If you have an endpoint to fetch user profile, use it here
-            // const response = await API.get('/auth/profile', {
-            //   headers: { Authorization: `Bearer ${token}` }
-            // });
-            // setUser(response.data);
+            console.log('No user data found in localStorage');
+            
           }
         } catch (err) {
           console.error('Failed to authenticate user:', err);
@@ -80,7 +72,6 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   };
-
   // Signup function
   const signup = async userData => {
     setLoading(true);
@@ -96,21 +87,21 @@ export const AuthProvider = ({ children }) => {
       });
 
       console.log('Signup response:', response);
-      if (response.data.data) {
-        console.log('Signup data:', response.data.data);
-        // const { token, user } = response.data.data;
-        const user  = response.data.data;
 
-
-
-        // localStorage.setItem('token', token || response.data.access_token);
-        localStorage.setItem('user', JSON.stringify(user));
-        setUser(user);
-        return { success: true, user };
+      // Check if signup was successful
+      if (response.data.status === 'success') {
+        return {
+          success: true,
+          message: response.data.message || 'Account created successfully',
+        };
       } else {
-        throw new Error('Invalid response format');
+        return {
+          success: false,
+          error: response.data.message || 'Failed to sign up',
+        };
       }
     } catch (err) {
+      console.error('Signup error:', err);
       setError(err.response?.data?.message || 'Failed to sign up');
       return {
         success: false,
@@ -121,7 +112,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Logout function
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');

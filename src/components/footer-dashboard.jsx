@@ -252,10 +252,9 @@ const FooterDashboard = () => {
           });
           console.log('Quick Stats:', {
             recentAnnotations: recentAnnotationsCount,
-            activeProjects: stats.nbrOfDatasets ,
+            activeProjects: stats.nbrOfDatasets,
             pendingTasks: pendingTasksCount,
           });
-
         } else {
           setQuickStats({
             recentAnnotations: recentAnnotationsCount,
@@ -266,27 +265,26 @@ const FooterDashboard = () => {
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
 
-        // Fallback to mock data for annotator stats
         setAnnotatorStats({
-          min: { id: '3', value: 1, name: 'Annotateur 3' },
-          median: { id: '5', value: 5, name: 'Annotateur 5' },
-          max: { id: '7', value: 8, name: 'Annotateur 7' },
+          min: { id: '3', value: 0, name: 'Annotateur 3' },
+          median: { id: '5', value: 0, name: 'Annotateur 5' },
+          max: { id: '7', value: 0, name: 'Annotateur 7' },
         });
 
-       const mockActivity = [
+        const mockActivity = [
           {
             id: 1,
             type: 'annotation',
-            message: 'New annotation completed on Dataset #12',
+            message: 'New annotation completed on Dataset',
             time: '2 hours ago',
-            user: 'John Doe',
+            user: 'Default Annotator',
           },
           {
             id: 2,
             type: 'user',
             message: 'New annotator joined the platform',
             time: '4 hours ago',
-            user: 'Jane Smith',
+            user: 'Admin',
           },
           {
             id: 3,
@@ -299,9 +297,9 @@ const FooterDashboard = () => {
 
         setRecentActivity(mockActivity);
         setQuickStats({
-          recentAnnotations: 15,
-          activeProjects: 8,
-          pendingTasks: 23,
+          recentAnnotations: 0,
+          activeProjects: 0,
+          pendingTasks: 0,
         });
       } finally {
         setLoading(false);
@@ -344,7 +342,7 @@ const FooterDashboard = () => {
         name: getFirstName(annotatorStats.min.name),
         value: annotatorStats.min.value,
         id: annotatorStats.min.id,
-        fill: '#FDA4AF', 
+        fill: '#FDA4AF',
       },
       {
         name: getFirstName(annotatorStats.median.name),
